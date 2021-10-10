@@ -7,7 +7,7 @@
 #include <SoftwareSerial.h>   // ESP8266/wemos requirement
 #include "Adafruit_SSD1306.h" // OLED requirement
 
-#define myDEBUG true
+#define myDEBUG false
 
 // Unique id of module, which is used to build the MQTT topic on which data are published.
 #define PZEM_TOPIC "pzem" 

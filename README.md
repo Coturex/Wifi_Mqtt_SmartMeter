@@ -1,8 +1,11 @@
 WIFI MQTT SMART POWER METER
- * PZEM : Read Power Consumption
+ * PZEM : Read Power Consumption/Production
  * publish PZEM values on MQTT topic and MQTT Domoticz/in topic
  * display Power/Voltage on mini screen
  * Wired into Rail-DIN box
+
+![photo](https://user-images.githubusercontent.com/53934994/136688865-a3b4bae1-0c27-487a-a898-0a9e817c8b39.png)
+
 
 Hardware :
 
@@ -28,10 +31,10 @@ Wiring :  (todo -> fritz schematic )
         [ D6(RX) ] <--------< [ TX_(3)  (jaune)    ///        Coil  ]
         [ GND    ] ---------- [ GND (4) (bleu)     ///        Coil  ]
 
-**********************************
-** BE CARREFULL AND VERY CLEAN 
-** ON AC/dc CONNECTIONS
-**********************************
+***
+BE CARREFULL 
+ON AC/dc CONNECTIONS
+***
 
 FYI : 
 some Linux distrib failed on connect Uart CH340/1 while flashing ESP8266
