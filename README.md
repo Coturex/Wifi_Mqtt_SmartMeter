@@ -10,7 +10,7 @@
 ## Hardware requirements:
 
 * PZEM Model : PZEM004T-100A v2.0, PZEM004T-100A v3.0   (v2.0 not supported)
-   - PZEM-004T-v30         (git clone https://github.com/mandulaj/PZEM-004T-v30.git)
+   - PZEM-004T-v30         
 
 * ESP Board : Wemos d1 mini (CH341 uart), esp8266
    - SoftSerial Method used on D5 D6 
@@ -40,7 +40,7 @@
 ***
 
 FYI : 
-some Linux distrib failed on connect Uart CH340/1 while flashing ESP8266
+some Linux distrib (Ubuntu 20.x) failed on connect Uart CH340/1 while flashing ESP8266
 
      -> "Timed out waiting for packet header"
 fixed in kernels 5.13.14 and maybe upper
