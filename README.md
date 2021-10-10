@@ -39,4 +39,5 @@ ON AC/dc CONNECTIONS
 FYI : 
 some Linux distrib failed on connect Uart CH340/1 while flashing ESP8266
      -> "Timed out waiting for packet header"
-fixed in kernels 5.13.14 and maybe upper
+fixed in kernels 5.13.14 and maybe upper 
+(https://cdn.kernel.org/pub/linux/kernel/v5.x/ChangeLog-5.13.14)
