@@ -1,4 +1,4 @@
-WIFI MQTT SMART POWER METER
+# WIFI MQTT SMART POWER METER
  * PZEM : Read Power Consumption/Production
  * publish PZEM values on MQTT topic and MQTT Domoticz/in topic
  * display Power/Voltage on mini screen
@@ -7,10 +7,10 @@ WIFI MQTT SMART POWER METER
 ![photo](https://user-images.githubusercontent.com/53934994/136688865-a3b4bae1-0c27-487a-a898-0a9e817c8b39.png)
 
 
-Hardware :
+## Hardware requirements:
 
 * PZEM Model : PZEM004T-100A v2.0, PZEM004T-100A v3.0   (v2.0 not supported)
-   - PZEM-004T-v30         (git clone https://github.com/mandulaj/PZEM-004T-v30.git)
+   - PZEM-004T-v30         
 
 * ESP Board : Wemos d1 mini (CH341 uart), esp8266
    - SoftSerial Method used on D5 D6 
@@ -24,20 +24,24 @@ Hardware :
 * Plc RailDin Box ~8x37x59mm
 
 
-Wiring :  (todo -> fritz schematic )
-        [Esp8266 ] ---------- [ PZEM004T-100A                       ]         
-        [ Vcc-5V ] ---------- [ 5V (1)  (violet)   ///      L-230V  ]
-        [ D5(TX) ] >--------> [ RX (2)  (vert)     ///      N-230V  ]       
-        [ D6(RX) ] <--------< [ TX_(3)  (jaune)    ///        Coil  ]
-        [ GND    ] ---------- [ GND (4) (bleu)     ///        Coil  ]
+## Wiring : 
+        | Esp8266|...|PZEM004T-100A                     |    
+        |--------|---|----------------------------------|
+        | Vcc-5V |---|5V (1)  (violet)   ///      L-230V|
+        | D5(TX) |->-|RX (2)  (vert)     ///      N-230V|      
+        | D6(RX) |-<-|TX_(3)  (jaune)    ///        Coil|
+        | GND    |---|GND (4) (bleu)     ///        Coil|
+        
+        *todo -> fritz schematic *
 
 ***
-BE CARREFULL 
-ON AC/dc CONNECTIONS
+# BE CARREFULL 
+# ON AC/dc CONNECTIONS
 ***
 
 FYI : 
-some Linux distrib failed on connect Uart CH340/1 while flashing ESP8266
+some Linux distrib (Ubuntu 20.x) failed on connect Uart CH340/1 while flashing ESP8266
+
      -> "Timed out waiting for packet header"
 fixed in kernels 5.13.14 and maybe upper 
 (https://cdn.kernel.org/pub/linux/kernel/v5.x/ChangeLog-5.13.14)
