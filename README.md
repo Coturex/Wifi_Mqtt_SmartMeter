@@ -1,4 +1,4 @@
-# WIFI MQTT SMART POWER METER
+# WIFI MQTT ENERGY SMARTMETER
  * PZEM : Read Power Consumption/Production
  * publish PZEM values on MQTT topic and MQTT Domoticz/in topic
  * display Power/Voltage on mini screen
