@@ -9,7 +9,7 @@
 
 ## Hardware requirements:
 
-* PZEM Model : PZEM004T-100A v2.0, PZEM004T-100A v3.0   (v2.0 not supported)
+* PZEM Model : PZEM004T-100A v2.0, PZEM004T-100A v3.0   (v2.0 not yet supported)
    - PZEM-004T-v30         
 
 * ESP Board : Wemos d1 mini (CH341 uart), esp8266
@@ -37,14 +37,17 @@
 # ON AC/dc CONNECTIONS
 
 
-# FYI : 
+## FYI : 
 some Linux distrib (Ubuntu 20.x) failed on connect Uart CH340/1 while flashing ESP8266
 
      -> "Timed out waiting for packet header"
 fixed in kernels 5.13.14 and maybe upper 
 (https://cdn.kernel.org/pub/linux/kernel/v5.x/ChangeLog-5.13.14)
 
-# Todo :
-   - Add Wifi AccesPoint and config function (ESP WifiManager)
+Ubuntu 21.x : even worse
+
+## Todo :
+   - Add Wifi AccesPoint and config througth http request (ESP WifiManager)
+         (esp/mqtt configs are 'source coded' )
    - Add fritz schematic
-   - Add PZEM-v20
+   - Add deprecated  PZEM version v2.0 (I have 2 left)
