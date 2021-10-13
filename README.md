@@ -5,7 +5,7 @@
  * Wired into Rail-DIN box
 
 ![photo](https://user-images.githubusercontent.com/53934994/136688865-a3b4bae1-0c27-487a-a898-0a9e817c8b39.png)
-
+![photo](https://user-images.githubusercontent.com/53934994/137083496-70fa6ab4-3972-4f08-b075-35438a764d2d.png)
 
 ## Hardware requirements:
 
@@ -32,16 +32,19 @@
         | D6(RX) |-<-|TX_(3)  (jaune)    ///        Coil|
         | GND    |---|GND (4) (bleu)     ///        Coil|
         
-        *todo -> fritz schematic *
-
 ***
 # BE CARREFULL 
 # ON AC/dc CONNECTIONS
-***
 
-FYI : 
+
+# FYI : 
 some Linux distrib (Ubuntu 20.x) failed on connect Uart CH340/1 while flashing ESP8266
 
      -> "Timed out waiting for packet header"
 fixed in kernels 5.13.14 and maybe upper 
 (https://cdn.kernel.org/pub/linux/kernel/v5.x/ChangeLog-5.13.14)
+
+# Todo :
+   - Add Wifi AccesPoint and config function (ESP WifiManager)
+   - Add fritz schematic
+   - Add PZEM-v20
