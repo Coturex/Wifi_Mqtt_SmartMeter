@@ -1,7 +1,7 @@
 # WIFI MQTT ENERGY SMARTMETER
  * PZEM : Read Power Consumption/Production
  * publish PZEM values on MQTT topic and MQTT Domoticz/in topic
- * display Power/Voltage on mini screen
+ * display Power/Voltage/Hz on mini screen
  * Wired into Rail-DIN box
 
 ![photo](https://user-images.githubusercontent.com/53934994/136688865-a3b4bae1-0c27-487a-a898-0a9e817c8b39.png)
