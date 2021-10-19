@@ -1,7 +1,7 @@
 # WIFI MQTT ENERGY SMARTMETER
- * PZEM : Read Power Consumption/Production
- * publish PZEM values on MQTT topic and MQTT Domoticz/in topic
- * display Power/Voltage/Hz on mini screen
+ * PZEM : Read Power Consumption/Production   (sample every 4seconds)
+ * publish PZEM values on MQTT topic and MQTT Domoticz/in topic (data sent to your Domotic Box, raspberry, PC...)
+ * display Power/Voltage/Hz on mini screen    (every 4s)
  * Wired into Rail-DIN box
 
 ![photo](https://user-images.githubusercontent.com/53934994/136688865-a3b4bae1-0c27-487a-a898-0a9e817c8b39.png)
@@ -47,7 +47,7 @@ fixed in kernels 5.13.14 and maybe upper
 Ubuntu 21.x : even worse
 
 ## Todo :
-   - Add Wifi AccesPoint and config througth http request (ESP WifiManager)
-         (esp/mqtt configs are 'source coded' )
+   - Add Wifi AccesPoint and config througth http request (ESP WifiManager) instead of 'source coded' Wifi/mqtt configs  
    - Add fritz schematic
    - Add deprecated  PZEM version v2.0 (I have 2 left)
+ 
