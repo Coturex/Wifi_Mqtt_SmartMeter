@@ -67,7 +67,7 @@ void oled_cls(int size) {
     // OLED : set cursor on top left corner and clear
     display.clearDisplay();
     display.setTextSize(size);
-    display.setTextColor(WHITE); // only WHITE exist on this oled model :(
+    display.setTextColor(WHITE); // seems only WHITE exist on this oled model :(
     display.setCursor(0,0);
 }
 
@@ -110,11 +110,9 @@ void wifi_connect () {
 
     Serial.println("");
     Serial.print("Wifi Connected");
-  
-    //If connection successful show IP address in serial monitor
     Serial.println("");
     Serial.print("Connected to Network : ");
-    Serial.println(WiFi.localIP());  //IP address assigned to your ESP
+    Serial.println(WiFi.localIP());  //IP address assigned to ESP
     oled_cls(1);
     display.println("Wifi on");
     display.println(WiFi.localIP());
@@ -164,8 +162,8 @@ void setup_wifi () {
         wm.startConfigPortal("test_pzem_AP");
     }
     else {
-        //Here I'm connected to the WiFi
-        Serial.println("connected...yeey :)");
+        //Here connected to the WiFi
+        Serial.println("connected...yeaaa :)");
     }
     WiFi.printDiag(Serial);
 }
@@ -265,7 +263,7 @@ void setup() {
     mqtt_client.setServer(settings.mqtt_server, port); // data will be published
     // OTA 
     #ifdef USEOTA
-    //webota.init(8080,"/update"); // Start WebOTA server
+    //webota.init(8080,"/update"); // Init WebOTA server - to be tested
     #endif
 
 
@@ -277,7 +275,7 @@ void loop() {
         wifi_connect();
     }
     if (!mqtt_client.connected() && WiFi.status() == WL_CONNECTED ) {
-        if (mqtt_connect(5)) { // retry, workaround which allow webOTA handle
+        if (mqtt_connect(5)) { // retry, workaround which allow webOTA handle (at the end of loop)
             bootPub();
         } 
     }
@@ -356,7 +354,7 @@ void loop() {
 
     if (myDEBUG) {
         Serial.print("loop time (ms) : ") ;
-        Serial.println((millis()-startTime)); // prints time since program started 
+        Serial.println((millis()-startTime)); // print spare time in loop 
         // delay(10000);
         }   
     
