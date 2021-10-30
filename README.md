@@ -1,9 +1,9 @@
 # WIFI MQTT ENERGY SMARTMETER
  * PZEM : Read Power Consumption/Production   (sample every 4seconds)
- * Dara sent to your Domotic Box, raspberry, PC... using MQTT
+ * Data sent to your Domotic Box, raspberry, PC... using MQTT
  * Publish all PZEM values on MQTT 'Pzem topic' and voltage/power on 'domoticz/in' topic (for Domoticz)
  * Display Power/Voltage/Hz on mini screen    (every 4s)
- * Wired into Rail-DIN box
+ * Wired inside Rail-DIN box
 
 ![photo](https://user-images.githubusercontent.com/53934994/136688865-a3b4bae1-0c27-487a-a898-0a9e817c8b39.png)
 ![photo](https://user-images.githubusercontent.com/53934994/137083496-70fa6ab4-3972-4f08-b075-35438a764d2d.png)
