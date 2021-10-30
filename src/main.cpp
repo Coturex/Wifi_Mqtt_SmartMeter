@@ -8,10 +8,17 @@
 //#include "PZEM004Tv20.h"      // comment if not used
 #include "Adafruit_SSD1306.h"   // OLED requirement
 
-#include <EEPROM.h>              // EEPROM access...
+#define USEOTA // enable On The Air firmware flash 
+#ifdef USEOTA
+#include "WebOTA.h"
+#endif
+
+//#include "myConfig_sample.h"  // Personnal settings - 'gited file'
+#include "myConfig.h"           // Personnal settings - Not 'gited file'
+#include <EEPROM.h>             // EEPROM access...
 #define MAX_STRING_LENGTH 20         
 
-#define myDEBUG false
+#define myDEBUG true
 
 #define FW_VERSION "1.1"
 #define DOMO_TOPIC "domoticz/in" 
@@ -163,15 +170,16 @@ void setup_wifi () {
     WiFi.printDiag(Serial);
 }
 
-bool mqtt_connect() {
+bool mqtt_connect(int retry) {
     bool ret = false ;
-    while (!mqtt_client.connected() && WiFi.status() == WL_CONNECTED) {
+    while (!mqtt_client.connected() && WiFi.status() == WL_CONNECTED && retry) {
+        retry--;
         String clientId = "pzem";
-        Serial.print("Mqtt (re)connecting ") ;
-        Serial.println(String(settings.mqtt_server)+"@"+String(settings.mqtt_port)) ; 
+        Serial.print("Mqtt (re)connecting (" + String(retry) + ") ") ;
+        Serial.println(String(settings.mqtt_server)+":"+String(settings.mqtt_port)) ; 
         oled_cls(1);
         display.println("Connecting");
-        display.println("mqtt");  
+        display.println("mqtt - (" + String(retry)+")");  
         display.println("idx_v :" + String (settings.idx_power) );
         display.println("idx_p :" + String (settings.idx_voltage) );
         display.display();
@@ -193,6 +201,8 @@ void bootPub() {
                 msg += "\"" + String(settings.idx_power) + "\"" ;
                 msg += ", \"pzem1_idx2\": ";
                 msg += "\"" + String(settings.idx_voltage) + "\"" ;
+                msg += ", \"ip\": ";  
+                msg += WiFi.localIP().toString().c_str() ;
                 msg += "}" ;
         mqtt_client.publish(String(settings.pzem_topic).c_str(), msg.c_str()); 
 }
@@ -232,41 +242,47 @@ void setup() {
     randomSeed(micros());  // initializes the pseudo-random number generator
 
     Serial.begin(115200);
+
+    // Pzem
     pzem1 = PZEM004Tv30(pzemSWSerial1) ; 
     //pzem1.resetEnergy()    // can be implemented on Mqtt rx message
+
     // OLED Shield 
     display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3C (for the 64x48)
     display.display();
     if (myDEBUG) {delay(10000);} 
+    
     //load eeprom data (sizeof(settings) bytes) from flash memory into ram
     EEPROM.begin(sizeof(settings));
     Serial.println("EEPROM size: " + String(sizeof(settings)) + " bytes");
-    read_Settings();
+    
+    read_Settings(); // read EEPROM
     setup_wifi() ;
     delay(5000) ;
     uint16_t port ;
     char *ptr ;
     port = strtoul(settings.mqtt_port,&ptr,10) ;
     mqtt_client.setServer(settings.mqtt_server, port); // data will be published
-    Serial.println("*****" + String(port));
-    delay(5000) ;
+    // OTA 
+    #ifdef USEOTA
+    //webota.init(8080,"/update"); // Start WebOTA server
+    #endif
+
+
 }
 
 void loop() {
-    unsigned long startTime;
+    unsigned long startTime = millis();
     if (WiFi.status() != WL_CONNECTED) {
         wifi_connect();
     }
-    if (!mqtt_client.connected() && WiFi.status() == WL_CONNECTED) {
-        if (mqtt_connect()) {
+    if (!mqtt_client.connected() && WiFi.status() == WL_CONNECTED ) {
+        if (mqtt_connect(5)) { // retry, workaround which allow webOTA handle
             bootPub();
-        }
+        } 
     }
-    mqtt_client.loop(); // seems blocks for 100ms
-    Serial.print("start Time: ");
-    startTime = millis();
 
-    Serial.println(startTime);
+    mqtt_client.loop(); // seems it blocks for 100ms
     Serial.print("PZEM-1 Custom Address:");
     Serial.println(pzem1.readAddress(), HEX);
     
@@ -330,11 +346,19 @@ void loop() {
                     display.println(" V");
                     }
     display.display();
+
+    #ifdef USEOTA
+    webota.handle(); 
+    webota.delay(PERIOD_V30);
+    #else
     delay(PERIOD_V30) ;
+    #endif
 
     if (myDEBUG) {
-        Serial.println(startTime-millis()); // prints time since program started 
+        Serial.print("loop time (ms) : ") ;
+        Serial.println((millis()-startTime)); // prints time since program started 
         // delay(10000);
-        } 
+        }   
+    
 }
 

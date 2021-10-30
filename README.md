@@ -1,16 +1,17 @@
 # WIFI MQTT ENERGY SMARTMETER
  * PZEM : Read Power Consumption/Production   (sample every 4seconds)
- * publish PZEM values on MQTT topic and MQTT Domoticz/in topic (data sent to your Domotic Box, raspberry, PC...)
- * display Power/Voltage/Hz on mini screen    (every 4s)
+ * Dara sent to your Domotic Box, raspberry, PC... using MQTT
+ * Publish all PZEM values on MQTT 'Pzem topic' and voltage/power on 'domoticz/in' topic (for Domoticz)
+ * Display Power/Voltage/Hz on mini screen    (every 4s)
  * Wired into Rail-DIN box
 
 ![photo](https://user-images.githubusercontent.com/53934994/136688865-a3b4bae1-0c27-487a-a898-0a9e817c8b39.png)
 ![photo](https://user-images.githubusercontent.com/53934994/137083496-70fa6ab4-3972-4f08-b075-35438a764d2d.png)
 
- * Wifi Access Point WebServer and settings parameters
+ * Wifi Access Point WebServer and set custom parameters
+ * WebOTA : On The Air firmware update (url http://<pzem_ip>:8080/webota)
 
-![photo](https://user-images.githubusercontent.com/53934994/139524783-e31e143a-8162-4a8c-8bb7-230019a4467c.png)
-
+![photo](https://user-images.githubusercontent.com/53934994/139536819-df299a4f-86d1-45ee-afe6-58e61d8bed9b.png)
 
 ## Hardware requirements:
 
@@ -41,7 +42,6 @@
 # BE CARREFULL 
 # ON AC/dc CONNECTIONS
 
-
 ## FYI : 
 some Linux distrib (Ubuntu 20.x) failed on connect Uart CH340/1 while flashing ESP8266
 
@@ -52,9 +52,8 @@ fixed in kernels 5.13.14 and maybe upper
 Ubuntu 21.x : even worse
 
 ## Todo :
-   - Add fritz schematic
+   - fritz schematic
    - Add deprecated  PZEM version v2.0 (I have 2 left)
-   - On MQTT Command Msg : change domoticz idx, start AcessPoint, etc...
+   - On MQTT Command Msg : change domoticz idx, start AccessPoint, etc...
    - Add OTA, On The Air flash firmware
-
-
+   - release
