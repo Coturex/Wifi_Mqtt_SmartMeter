@@ -7,6 +7,11 @@
 ![photo](https://user-images.githubusercontent.com/53934994/136688865-a3b4bae1-0c27-487a-a898-0a9e817c8b39.png)
 ![photo](https://user-images.githubusercontent.com/53934994/137083496-70fa6ab4-3972-4f08-b075-35438a764d2d.png)
 
+ * Wifi Access Point WebServer and settings parameters
+
+![photo](https://user-images.githubusercontent.com/53934994/139524783-e31e143a-8162-4a8c-8bb7-230019a4467c.png)
+
+
 ## Hardware requirements:
 
 * PZEM Model : PZEM004T-100A v2.0, PZEM004T-100A v3.0   (v2.0 not yet supported)
@@ -32,7 +37,7 @@
         | D6(RX) |-<-|TX_(3)  (jaune)    ///        Coil|
         | GND    |---|GND (4) (bleu)     ///        Coil|
         
-***
+
 # BE CARREFULL 
 # ON AC/dc CONNECTIONS
 
@@ -47,7 +52,9 @@ fixed in kernels 5.13.14 and maybe upper
 Ubuntu 21.x : even worse
 
 ## Todo :
-   - Add Wifi AccesPoint and config througth http request (ESP WifiManager) instead of 'source coded' Wifi/mqtt configs  
    - Add fritz schematic
    - Add deprecated  PZEM version v2.0 (I have 2 left)
- 
+   - On MQTT Command Msg : change domoticz idx, start AcessPoint, etc...
+   - Add OTA, On The Air flash firmware
+
+
