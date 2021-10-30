@@ -13,7 +13,7 @@
 
 ![photo](https://user-images.githubusercontent.com/53934994/139536819-df299a4f-86d1-45ee-afe6-58e61d8bed9b.png)
 
-## Hardware requirements:   ~23-25 €
+## Hardware requirements:   ~22-25 €
 
 * PZEM Model : PZEM004T-100A v3.0   (v2.0 not yet supported)
    - PZEM-004T-v30         
