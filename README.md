@@ -9,7 +9,7 @@
 ![photo](https://user-images.githubusercontent.com/53934994/137083496-70fa6ab4-3972-4f08-b075-35438a764d2d.png)
 
  * Wifi Access Point WebServer and set custom parameters
- * WebOTA : On The Air firmware update (url http://<pzem_ip>:8080/webota)
+ * WebOTA : On The Air firmware update (url http://<pzem_ip>:8080/webota - 60s after boot)
 
 ![photo](https://user-images.githubusercontent.com/53934994/139536819-df299a4f-86d1-45ee-afe6-58e61d8bed9b.png)
 
@@ -55,5 +55,3 @@ Ubuntu 21.x : even worse
    - fritz schematic
    - Add deprecated  PZEM version v2.0 (I have 2 left)
    - On MQTT Command Msg : change domoticz idx, start AccessPoint, etc...
-   - Add OTA, On The Air flash firmware
-   - release
