@@ -38,6 +38,7 @@
         | D6(RX) |-<-|TX_(3)  (jaune)    ///        Coil|
         | GND    |---|GND (4) (bleu)     ///        Coil|
         
+![photo](https://user-images.githubusercontent.com/53934994/139558602-1654c534-b2dc-4c6d-933c-fd18c7fac8af.png)
 
 # BE CARREFULL 
 # ON AC/dc CONNECTIONS
@@ -52,6 +53,6 @@ fixed in kernels 5.13.14 and maybe upper
 Ubuntu 21.x : even worse
 
 ## Todo :
-   - fritz schematic
+
    - Add deprecated  PZEM version v2.0 (I have 2 left)
    - On MQTT Command Msg : change domoticz idx, start AccessPoint, etc...
