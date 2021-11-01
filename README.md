@@ -43,17 +43,19 @@
 # BE CARREFULL 
 # ON AC/dc CONNECTIONS
 
-## Domoticz settings
+
+## Domoticz settings
+
 In domoticz you will have to activate the MQTT protocol and install (mosquitto) MQTT server on your home automation box. (raspberry or PC ...).
 The power measurement (W) must then be associated with a virtual sensor
-   - type of sensor: Electric (instantaneous + counter)
+   - Type of sensor: Electric (instantaneous + counter)
    - Energy Read: * computed *
-   - let remember the idx of this new device, it will be informed trougth the Access Point Wifi Manager
+   - →  Let remember the idx of this new device, it will be informed trougth the Access Point Wifi Manager
    
 ## FYI : 
 some Linux distrib (Ubuntu 20.x) failed on connect Uart CH340/1 while flashing ESP8266
 
-     -> "Timed out waiting for packet header"
+     →  "Timed out waiting for packet header"
 fixed in kernels 5.13.14 and maybe upper 
 (https://cdn.kernel.org/pub/linux/kernel/v5.x/ChangeLog-5.13.14)
 
