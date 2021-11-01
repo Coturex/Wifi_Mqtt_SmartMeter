@@ -43,6 +43,9 @@
 # BE CARREFULL 
 # ON AC/dc CONNECTIONS
 
+## Firmware
+
+→ v1.1 : https://github.com/Coturex/Wifi_Mqtt_SmartMeter/releases/download/v1.1/firmware.bin
 
 ## Domoticz settings
 
