@@ -1,3 +1,25 @@
+/*
+ * Copyright (C) 2021-2022 Coturex - F5RQG
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// Wemos pin use : it's best to avoid GPIO 0, 2 and 15 (D3, D4, D8)
+// D5 : RX pzem
+// D6 : TX pzem
+// D1 : I2C clock - OLED
+// D2 : I2C data  - OLED
+
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
@@ -16,9 +38,7 @@
 //#include "myConfig_sample.h"  // Personnal settings - 'gited file'
 #include "myConfig.h"           // Personnal settings - Not 'gited file'
 #include <EEPROM.h>             // EEPROM access...
-#define MAX_STRING_LENGTH 20         
-
-#define myDEBUG true
+#define MAX_STRING_LENGTH 35         
 
 #define FW_VERSION "1.1"
 #define DOMO_TOPIC "domoticz/in" 
@@ -41,10 +61,11 @@ PubSubClient mqtt_client(espClient);
 SoftwareSerial pzemSWSerial1(D5, D6);
 PZEM004Tv30 pzem1 ; // (RX,TX)connect to TX,RX of PZEM
 
-// wifiManager TEST OPTION FLAGS
-bool TEST_CP         = false; // always start the ConfigPortal, even if ap found
-int  TESP_CP_TIMEOUT = 30;   // test cp timeout
-bool ALLOWONDEMAND   = true; // enable on demand - e.g Trigged on Gpio Input, On Mqtt Msg etc...
+//  TEST & DEBUG OPTION FLAGS
+bool DEBUG = true ;
+bool TEST_CP         = false; // AP : always start the ConfigPortal, even if ap found
+int  TESP_CP_TIMEOUT = 30;    // AP : test cp timeout
+bool ALLOWONDEMAND   = true;  // AP : enable on demand - e.g Trigged on Gpio Input, On Mqtt Msg etc...
 
 struct { 
     char mqtt_server[MAX_STRING_LENGTH] = "";
@@ -58,7 +79,7 @@ struct {
 WiFiManager wm;
 WiFiManagerParameter custom_mqtt_server("mqtt_server", "mqtt IP server", "", 15);
 WiFiManagerParameter custom_mqtt_port("mqtt_port", "mqtt Port", "", 4);
-WiFiManagerParameter custom_pzem_topic("pzem_topic", "Pzem Topic", "", 15);
+WiFiManagerParameter custom_pzem_topic("pzem_topic", "Pzem Topic", "", 35);
 WiFiManagerParameter custom_pzem_id("pzem_id", "Pzem ID", "", 15);
 WiFiManagerParameter custom_idx_power("idx_power", "Domoticz idx power", "", 4); 
 WiFiManagerParameter custom_idx_voltage("idx_volt", "Domoticz idx voltage", "", 4);
@@ -171,18 +192,20 @@ void setup_wifi () {
 bool mqtt_connect(int retry) {
     bool ret = false ;
     while (!mqtt_client.connected() && WiFi.status() == WL_CONNECTED && retry) {
-        retry--;
-        String clientId = "pzem";
+        String clientId = "pzem-"+String(settings.pzem_id);
         Serial.print("Mqtt (re)connecting (" + String(retry) + ") ") ;
+        retry--;
         Serial.println(String(settings.mqtt_server)+":"+String(settings.mqtt_port)) ; 
         oled_cls(1);
         display.println("Connecting");
         display.println("mqtt - (" + String(retry)+")");  
-        display.println("idx_v :" + String (settings.idx_power) );
-        display.println("idx_p :" + String (settings.idx_voltage) );
+        display.println("idx_p :" + String (settings.idx_power) );
+        display.println("idx_v :" + String (settings.idx_voltage) );
         display.display();
-        if (!mqtt_client.connect(clientId.c_str())) {
+         if (!mqtt_client.connect(clientId.c_str())) {
             delay(5000);
+            ret = false ;
+        } else {
             ret = true ;
         }
     }
@@ -190,14 +213,16 @@ bool mqtt_connect(int retry) {
 }
 
 void bootPub() {
-        String  msg = "{\"type\": \"boot\"";	
+        String  msg = "{\"type\": \"pzem\"";	
+                msg += ", \"id\": ";
+                msg += "\"" + String(settings.pzem_id) + "\"" ;
                 msg += ", \"fw_version\": ";
                 msg += "\"" + String(FW_VERSION) + "\"" ;
-                msg += ", \"pzem1_version\": ";
+                msg += ", \"pzem_version\": ";
                 msg += "\"v3.0\"" ;
-                msg += ", \"pzem1_idx1\": ";
+                msg += ", \"pzem_idx1\": ";
                 msg += "\"" + String(settings.idx_power) + "\"" ;
-                msg += ", \"pzem1_idx2\": ";
+                msg += ", \"pzem_idx2\": ";
                 msg += "\"" + String(settings.idx_voltage) + "\"" ;
                 msg += ", \"ip\": ";  
                 msg += WiFi.localIP().toString().c_str() ;
@@ -216,23 +241,25 @@ void domoPub(String idx, float value) {
       mqtt_client.publish(outTopic.c_str(), msg.c_str()); 
 }
 
-void pzemPub(float voltage, float current, float power, float energy, float frequency, float pf ) {
-      String msg = "{\"type\": \"pzem\"";	
-      msg += ", \"voltage\": ";
-      msg += String(voltage);
-      msg += ", \"current\": ";
-      msg += String(current);
-      msg += ", \"power\": ";
-      msg += String(power);
-      msg += ", \"energy\": ";
-      msg += String(energy);
-      msg += ", \"frequency\": ";
-      msg += String(frequency);
-      msg += ", \"powerfactor\": ";
-      msg += String(pf);
-      msg += "}";
-      String topic = String(settings.pzem_topic)+"/pzem-"+String(settings.pzem_id) ;
-      mqtt_client.publish(String(topic).c_str(), msg.c_str()); 
+void statusPub(float voltage, float current, float power, float energy, float frequency, float pf ) {
+    String msg = "{\"type\": \"pzem\"";	
+    msg += ", \"id\": ";
+    msg += String(settings.pzem_id); 
+    msg += ", \"voltage\": ";
+    msg += String(voltage);
+    msg += ", \"current\": ";
+    msg += String(current);
+    msg += ", \"power\": ";
+    msg += String(power);
+    msg += ", \"energy\": ";
+    msg += String(energy);
+    msg += ", \"frequency\": ";
+    msg += String(frequency);
+    msg += ", \"powerfactor\": ";
+    msg += String(pf);
+    msg += "}";
+    String topic = String(settings.pzem_topic)+"/"+String(settings.pzem_id) ;
+    mqtt_client.publish(String(topic).c_str(), msg.c_str()); 
 }
 
 void setup() {  
@@ -248,7 +275,7 @@ void setup() {
     // OLED Shield 
     display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3C (for the 64x48)
     display.display();
-    if (myDEBUG) {delay(10000);} 
+    if (DEBUG) {delay(10000);} 
     
     //load eeprom data (sizeof(settings) bytes) from flash memory into ram
     EEPROM.begin(sizeof(settings));
@@ -330,7 +357,7 @@ void loop() {
                 display.println("PFactor");
                 display.println("PZEM err.");
             } else {  
-                    pzemPub(voltage, current, power, energy, frequency, pf);
+                    statusPub(voltage, current, power, energy, frequency, pf);
                     domoPub(String(settings.idx_power),power);
                     domoPub(String(settings.idx_voltage),voltage);
                     display.println("CONSO :");
@@ -352,7 +379,7 @@ void loop() {
     delay(PERIOD_V30) ;
     #endif
 
-    if (myDEBUG) {
+    if (DEBUG) {
         Serial.print("loop time (ms) : ") ;
         Serial.println((millis()-startTime)); // print spare time in loop 
         // delay(10000);
