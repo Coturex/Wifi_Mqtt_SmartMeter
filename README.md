@@ -68,5 +68,5 @@ Ubuntu 21.x : even worse
 ## Todo :
 
    - Add deprecated  PZEM version v2.0 (I have 2 left)
-   - On MQTT Command Msg : change domoticz idx, start AccessPoint, etc...
+
 
