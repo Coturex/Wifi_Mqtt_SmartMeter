@@ -1,6 +1,6 @@
 # WIFI MQTT ENERGY SMARTMETER
  * PZEM : Read Power Consumption (OR Production) - sample every 4seconds
- * Data sent to your Domotic Box, raspberry, PC... using MQTT
+ * Data sent to your Domotic Box, raspberry, PC... using a MQTT Broker
  * Publish all PZEM values on MQTT 'Pzem topic' and voltage/power on 'domoticz/in' topic (for Domoticz)
  * Display Power/Voltage/Hz on mini screen    (every 4s)
  * Accuracy : ~1.5% (compared to ENEDIS/Linky Webservice)
@@ -10,7 +10,7 @@
 ![photo](https://user-images.githubusercontent.com/53934994/137083496-70fa6ab4-3972-4f08-b075-35438a764d2d.png)
 
  * Wifi Access Point WebServer and set custom parameters
- * WebOTA : On The Air firmware update (url http://<pzem_ip>:8080/webota - 60s after boot)
+ * WebOTA : On The Air firmware update (url http://<pzem_ip>:8080/update - 60s after boot)
 
 ![photo](https://user-images.githubusercontent.com/53934994/139536819-df299a4f-86d1-45ee-afe6-58e61d8bed9b.png)
 
