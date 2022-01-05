@@ -36,7 +36,6 @@
 //#include "myConfig_sample.h"  // Personnal settings - 'gited file'
 //#include "myConfig.h"           // Personnal settings - Not 'gited file'
 #include <EEPROM.h>             // EEPROM access...
-
 #define FW_VERSION "1.2"
 #define DOMO_TOPIC "domoticz/in" 
 
