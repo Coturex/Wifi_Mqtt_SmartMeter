@@ -16,7 +16,7 @@
 
 ## Hardware requirements:   ~22-25 €
 
-* PZEM Model : PZEM004T-100A v3.0   (v2.0 not yet supported)
+* PZEM Model : PZEM004T-100A v3.0   (or old v2.0)
    - PZEM-004T-v30         
 
 * ESP Board : Wemos d1 mini (CH341 uart), esp8266
@@ -67,6 +67,5 @@ Ubuntu 21.x : even worse
 
 ## Todo :
 
-   - Add deprecated  PZEM version v2.0 (I have 2 left)
-   - On MQTT Command Msg : change domoticz idx, start AccessPoint, etc...
+
 
