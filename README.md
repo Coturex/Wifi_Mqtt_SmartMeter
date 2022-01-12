@@ -3,7 +3,7 @@
  * Data sent to your Domotic Box, raspberry, PC... using a MQTT Broker
  * Publish all PZEM values on MQTT 'Pzem topic' and voltage/power on 'domoticz/in' topic (for Domoticz)
  * Display Power/Voltage/Hz on mini screen    (every 4s)
- * Accuracy : ~3 % (compared to ENEDIS/Linky Webservice)
+ * Accuracy : ~1.5 % (compared to ENEDIS/Linky Webservice) - measure using Integral on Grafana instead of Domoticz reports
  * Wired inside Rail-DIN box
 
 ![photo](https://user-images.githubusercontent.com/53934994/136688865-a3b4bae1-0c27-487a-a898-0a9e817c8b39.png)
