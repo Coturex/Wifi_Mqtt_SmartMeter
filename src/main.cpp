@@ -56,10 +56,10 @@ String outTopic;
 
 // *****************************************************
 // * WHICH PZEM VERSION IS USED ?
-// *****************************************************
-//#define USE_PZEM_V2 // COMMENT IF USE PZEM VERSION 3
-#undef USE_PZEM_V2 // COMMENT IF USE PZEM VERSION 2
-// *****************************************************
+// *******************************************************
+//#define USE_PZEM_V2 // LET COMMENT IF USE PZEM VERSION 3
+#undef USE_PZEM_V2 // LET COMMENT IF USE PZEM VERSION 2
+// *******************************************************
 
 #ifdef USE_PZEM_V2
 #include "PZEM004Tv20.h"      // comment if not used
@@ -268,21 +268,30 @@ void domoPub(String idx, float value) {
       mqtt_client.publish(domTopic.c_str(), msg.c_str()); 
 }
 
-void statusPub(float voltage, float current, float power, float energy, float frequency, float pf ) {
-    String msg = "{";
-    msg += "\"voltage\": ";
-    msg += String(voltage);
-    msg += ", \"current\": ";
-    msg += String(current);
-    msg += ", \"power\": ";
-    msg += String(power);
-    msg += ", \"energy\": ";
-    msg += String(energy);
-    msg += ", \"frequency\": ";
-    msg += String(frequency);
-    msg += ", \"powerfactor\": ";
-    msg += String(pf);
-    msg += "}";
+void statusPub(float voltage, float current, float power, float energy, float frequency, float pf, bool error) {
+    String msg ;
+    if (error) {
+        msg = "{ \"PZEM_READ_ERROR\" } ";
+    } else {
+        if (power < 0) { power = 0 ; } 
+        if (current < 0) { current = 0 ; } 
+        if (voltage < 0) { voltage = 0 ; } 
+        if (energy < 0) { energy = 0 ; } 
+        msg = "{";
+        msg += "\"voltage\": ";
+        msg += String(voltage);
+        msg += ", \"current\": ";
+        msg += String(current);
+        msg += ", \"power\": ";
+        msg += String(power);
+        msg += ", \"energy\": ";
+        msg += String(energy);
+        msg += ", \"frequency\": ";
+        msg += String(frequency);
+        msg += ", \"powerfactor\": ";
+        msg += String(pf);
+        msg += "}";
+    }
     String topic = String(settings.pzem_topic)+"/"+String(settings.pzem_id) ;
     mqtt_client.publish(String(topic).c_str(), msg.c_str()); 
 }
@@ -393,32 +402,39 @@ void loop() {
     */
     Serial.println("--") ;
     oled_cls(1);
+    int read_error ;
     if(isnan(voltage)) {
                 Serial.println("Error reading voltage");
                 display.println("Voltage");
                 display.println("PZEM err.");
+                read_error = true ;
             } else if (isnan(current)) {
                 Serial.println("Error reading current");
                 display.println("Current");
                 display.println("PZEM err.");
+                read_error = true ;
             } else if (isnan(power)) {  
                 Serial.println("Error reading power");
                 display.println("Power");
                 display.println("PZEM err.");
+                read_error = true ;
             } else if (isnan(energy)) { 
                 Serial.println("Error reading energy");
                 display.println("Energy");
                 display.println("PZEM err.");
+                read_error = true ;
             } else if (isnan(frequency)) {
                 Serial.println("Error reading frequency");
                 display.println("Frequency");
                 display.println("PZEM err.");
+                read_error = true ;
             } else if (isnan(pf)) {
                 Serial.println("Error reading power factor");
                 display.println("PFactor");
                 display.println("PZEM err.");
+                read_error = true ;
             } else {  
-                    statusPub(voltage, current, power, energy, frequency, pf);
+                    read_error = false ;
                     domoPub(String(settings.idx_power),power);
                     domoPub(String(settings.idx_voltage),voltage);
                     display.println("CONSO :");
@@ -431,6 +447,8 @@ void loop() {
                     display.print(String(voltage));
                     display.println(" V");
                     }
+    
+    statusPub(voltage, current, power, energy, frequency, pf, read_error);
     display.display();
 
     #ifdef USEOTA
