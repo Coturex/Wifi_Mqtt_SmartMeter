@@ -1,5 +1,5 @@
 # WIFI MQTT ENERGY SMARTMETER
- * PZEM : Read Power Consumption (OR Production) - sample rate : 2 seconds
+ * PZEM : Read Power Consumption (OR Production) - sample rate : 3s on PZEMv2, xx on PZEMv3
  * Data sent to your Domotic Box, raspberry, PC... using a MQTT Broker
  * Publish all PZEM values on MQTT 'Pzem topic' and voltage/power on 'domoticz/in' topic (for Domoticz)
  * Display Power/Voltage/Hz on mini screen    (every 4s)
