@@ -285,7 +285,7 @@ void bootPub() {
                 msg += ", \"ip\": ";  
                 msg += WiFi.localIP().toString().c_str() ;
                 msg += "}" ;
-        if (DEBUG) { Serial.println("Bootstrap on topic : " + String(settings.pzem_topic));}
+        if (DEBUG) { Serial.println("Sending Bootstrap on topic : " + String(settings.pzem_topic));}
         mqtt_client.publish(String(settings.pzem_topic).c_str(), msg.c_str()); 
 }
 
@@ -344,17 +344,27 @@ void rebootOnAP(int ap){
 }
 
 void on_message(char* topic, byte* payload, unsigned int length) {
-    if (DEBUG) { Serial.println("receiving msg on " + String(topic));}; 
+    if (DEBUG) { Serial.println("Receiving msg on topic : " + String(topic));}; 
     char buffer[length+1];
     memcpy(buffer, payload, length);
     buffer[length] = '\0';
-    if (DEBUG) { Serial.println("  msg : {" + String(topic) + "}");}; 
+    if (DEBUG) { Serial.println("  msg : {" + String(buffer) + "}");}; 
     if (String(buffer) == "bs") { // Bootstrap is requested
+            if (DEBUG) { Serial.println("     Bootstrap resquested") ; } ;
             bootPub();
     } else if (String(buffer) == "ap") { // AccessPoint is requested
+            if (DEBUG) { Serial.println("     AccessPoint resquested") ; } ;
             rebootOnAP(1);
+    } else if (String(buffer) == "reboot") { // Reboot is requested
+            if (DEBUG) { Serial.println("     Reboot resquested") ; } ;
+            ESP.restart(); 
+    } else if (String(buffer) == "reset") { // Reset Energy counter is requested
+            #ifdef USE_PZEM_V3
+            if (DEBUG) { Serial.println("     Reset Energy resquested") ; } ;
+            pzem1.resetEnergy()   ;
+            #endif
     } else {
-        float p = String(buffer).toFloat();
+        if (DEBUG) { Serial.println("     Nothing to do") ; } ;
     }
 }
 
@@ -366,7 +376,7 @@ void setup() {
     pzem1.setAddress(pzem_ip);
     #else // USE PZEM V3
     pzem1 = PZEM004Tv30(pzemSWSerial1) ; 
-    //pzem1.resetEnergy()    // can be implemented on Mqtt rx message
+    //pzem1.resetEnergy()    ;
     #endif
 
 
