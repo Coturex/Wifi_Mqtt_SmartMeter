@@ -1,11 +1,14 @@
 # WIFI MQTT ENERGY SMARTMETER
  * PZEM : Read Power Consumption (OR Production) - sample rate : 3s on PZEMv2, xx on PZEMv3
- * Data sent to your Domotic Box, raspberry, PC... using a MQTT Broker
+ * Data sent to your **Domoticz** Box, raspberry, PC... using a MQTT Broker
  
-            -> (sync on PZEM sample rate or DomoticzPubTimer)
- * Publish all PZEM values on MQTT 'Pzem topic' and voltage/power on 'domoticz/in' topic (for Domoticz)
- * Display Power/Voltage/Hz on mini screen    (every 4s)
- * Accuracy : ~1.5 % (compared to ENEDIS/Linky Webservice) - measure using Integral on Grafana instead of Domoticz reports
+            -> data are synchronized on PZEM sample rate or DomoticzPubTimer
+            
+ * Publish **all** PZEM **values** on MQTT → 'Pzem topic', 
+ 
+            and **voltage/power** on → 'domoticz/in' topic (for Domoticz)
+ * Display Power/Voltage/Hz on mini screen   
+ * Accuracy : ~1.5 % (compared to ENEDIS/Linky Webservice) - measure using Integral on Grafana (instead of Domoticz reports)
  * Wired inside Rail-DIN box
 
 ![photo](https://user-images.githubusercontent.com/53934994/136688865-a3b4bae1-0c27-487a-a898-0a9e817c8b39.png)
@@ -48,7 +51,7 @@
 
 ## Firmware
 
-→ v1.1 : https://github.com/Coturex/Wifi_Mqtt_SmartMeter/releases/download/v1.1/firmware.bin
+→ v1.2 : https://github.com/Coturex/Wifi_Mqtt_SmartMeter/releases/download/v1.2/firmware_v1.2.bin
 
 ## Domoticz settings
 
@@ -58,14 +61,34 @@ The power measurement (W) must then be associated with a virtual sensor
    - Energy Read: * computed *
    - →  Let remember the idx of this new device, it will be informed trougth the Access Point Wifi Manager
    
-## FYI : 
+## Tips
+
+Here are different 'On_message' MQTT commands :
+
+ Topic : 
+
+    _pzem_topic_ / _pzem_id_ / cmd
+
+Commands :
+
+  '**bs**' →  will send a bootstrap message
+ 
+  '**reboot**' → will reboot the device
+  
+  '**ap**' → will start AccessPoint Settings
+  
+  '**reset**'  → will reset Energy Counter _(only PZEM v3)_
+ 
+ 
+ 
+
+
+## FYI  
 some Linux distrib (Ubuntu 20.x) failed on connect Uart CH340/1 while flashing ESP8266
 
      →  "Timed out waiting for packet header"
 fixed in kernels 5.13.14 and maybe upper 
 (https://cdn.kernel.org/pub/linux/kernel/v5.x/ChangeLog-5.13.14)
-
-Ubuntu 21.x : even worse
 
 ## Todo :
 
