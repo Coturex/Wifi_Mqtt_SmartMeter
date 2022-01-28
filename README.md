@@ -15,7 +15,11 @@
 ![photo](https://user-images.githubusercontent.com/53934994/137083496-70fa6ab4-3972-4f08-b075-35438a764d2d.png)
 
  * Wifi Access Point WebServer and set custom parameters
- * WebOTA : On The Air firmware update (url http://<pzem_ip>:8080/update - 60s after boot)
+ * WebOTA : On The Air firmware update
+        
+        URL : http://<pzem_ip>:8080/update
+        
+        <pzem_ip> : this ip is published in the bootstrap Mqtt message ( topic : _pzem_topic_)
 
 ![photo](https://user-images.githubusercontent.com/53934994/139536819-df299a4f-86d1-45ee-afe6-58e61d8bed9b.png)
 
