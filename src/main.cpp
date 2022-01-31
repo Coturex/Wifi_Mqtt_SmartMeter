@@ -25,7 +25,7 @@
 #include <WiFiClient.h>
 #include <PubSubClient.h>       // Mqtt lib
 #include <SoftwareSerial.h>     // ESP8266/wemos requirement
-#include <WiFiManager.h>        // Manage Wifi Access Point if wifi connect failure (todo : and mqtt failure)
+#include <WiFiManager.h>        // Manage Wifi Access Point if wifi connect failure 
 #include "Adafruit_SSD1306.h"   // OLED requirement
 
 #define USEOTA // enable On The Air firmware flash 
@@ -57,8 +57,8 @@ String outTopic;
 // *****************************************************
 // * WHICH PZEM VERSION IS USED ?
 // *******************************************************
-#define USE_PZEM_V2 // LET COMMENT IF USE PZEM VERSION 3
-//#undef USE_PZEM_V2 // LET COMMENT IF USE PZEM VERSION 2
+//#define USE_PZEM_V2 // LET COMMENT IF USE PZEM VERSION 3
+#undef USE_PZEM_V2 // LET COMMENT IF USE PZEM VERSION 2
 // *******************************************************
 
 // Wait this duration between each measurement (milliseconds). This is added to the time needed to read data (~2s)
@@ -125,27 +125,8 @@ void oled_cls(int size) {
     display.setCursor(0,0);
 }
 
-void saveWifiCallback() { // Save settings to EEPROM
-    unsigned int addr=0 ;
-    String srate_str ;
-    Serial.println("[CALLBACK] saveParamCallback fired"); 
-    strncpy(settings.name, custom_name.getValue(), MAX_STRING_LENGTH);  
-    strncpy(settings.mqtt_server, custom_mqtt_server.getValue(), MAX_STRING_LENGTH);  
-    strncpy(settings.mqtt_port, custom_mqtt_port.getValue(), MAX_STRING_LENGTH);  
-    strncpy(settings.pzem_topic, custom_pzem_topic.getValue(), MAX_STRING_LENGTH);  
-    strncpy(settings.pzem_id, custom_pzem_id.getValue(), MAX_STRING_LENGTH);  
-    strncpy(settings.idx_power, custom_idx_power.getValue(), MAX_STRING_LENGTH);  
-    strncpy(settings.idx_voltage, custom_idx_voltage.getValue(), MAX_STRING_LENGTH);
-    char timerChar[MAX_STRING_LENGTH] = "";
-    strncpy(timerChar, custom_domoPubTimer.getValue(), MAX_STRING_LENGTH);
-    settings.domoPubTimer = String(timerChar).toInt() * 1000 ;
-
-    settings.AP = 0 ;  
-    EEPROM.put(addr, settings); //write data to array in ram 
-    EEPROM.commit();  //write data from ram to flash memory. Do nothing if there are no changes to EEPROM data in ram
-}
-
 void read_Settings () { // From EEPROM
+
     unsigned int addr=0 ;  
     //Serial.println("[READ EEPROM] read_Settings");  
     EEPROM.get(addr, settings); //read data from array in ram and cast it to settings
@@ -158,6 +139,43 @@ void read_Settings () { // From EEPROM
     Serial.println("[READ EEPROM] idx_voltage : " + String(settings.idx_voltage) ) ;
     Serial.println("[READ EEPROM] domoPubTimer   : " + String(settings.domoPubTimer) ) ;
     }
+
+void saveWifiCallback() { // Save settings to EEPROM
+    unsigned int addr=0 ;
+    String srate_str ;
+    read_Settings();
+    Serial.println("[CALLBACK] saveParamCallback fired"); 
+    // Field statint with '.' is ignored, value is not updated
+    if (custom_name.getValue()[0] != '.') { 
+        strncpy(settings.name, custom_name.getValue(), MAX_STRING_LENGTH);  
+    }
+    if (custom_name.getValue()[0] != '.') { 
+    strncpy(settings.mqtt_server, custom_mqtt_server.getValue(), MAX_STRING_LENGTH);  
+    }
+    if (custom_mqtt_port.getValue()[0] != '.') { 
+        strncpy(settings.mqtt_port, custom_mqtt_port.getValue(), MAX_STRING_LENGTH);  
+    }
+    if (custom_pzem_topic.getValue()[0] != '.') { 
+        strncpy(settings.pzem_topic, custom_pzem_topic.getValue(), MAX_STRING_LENGTH);  
+    }
+    if (custom_pzem_id.getValue()[0] != '.') { 
+        strncpy(settings.pzem_id, custom_pzem_id.getValue(), MAX_STRING_LENGTH);  
+    }
+    if (custom_idx_power.getValue()[0] != '.') { 
+        strncpy(settings.idx_power, custom_idx_power.getValue(), MAX_STRING_LENGTH);  
+    }
+    if (custom_idx_voltage.getValue()[0] != '.') { 
+        strncpy(settings.idx_voltage, custom_idx_voltage.getValue(), MAX_STRING_LENGTH);
+    }
+    if (custom_domoPubTimer.getValue()[0] != '.') { 
+        char timerChar[MAX_STRING_LENGTH] = "";
+        strncpy(timerChar, custom_domoPubTimer.getValue(), MAX_STRING_LENGTH);
+        settings.domoPubTimer = String(timerChar).toInt() * 1000 ;
+    }
+    settings.AP = 0 ;  
+    EEPROM.put(addr, settings); //write data to array in ram 
+    EEPROM.commit();  //write data from ram to flash memory. Do nothing if there are no changes to EEPROM data in ram
+}
 
 void wifi_connect () {
     // Wait for connection (even it's already done)
@@ -275,7 +293,11 @@ void bootPub() {
                 msg += ", \"fw_version\": ";
                 msg += "\"" + String(FW_VERSION) + "\"" ;
                 msg += ", \"pzem_version\": ";
-                msg += "\"v3.0\"" ;
+                #ifdef USE_PZEM_V2
+                msg += "\"v2.0\"" ;
+                #else
+                msg += "\"v3.x\"" ;
+                #endif               
                 msg += ", \"pzem_idx1\": ";
                 msg += "\"" + String(settings.idx_power) + "\"" ;
                 msg += ", \"pzem_idx2\": ";
@@ -474,7 +496,7 @@ bool readPZEM(){
                 pzemValues.read_error = true ;
             } else {  
                     pzemValues.read_error = false ;
-                    display.println("CONSO :");
+                    display.println(String(settings.name));
                     display.println("");
                     display.print(String(pzemValues.power));
                     display.println(" W");
