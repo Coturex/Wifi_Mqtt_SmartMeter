@@ -62,7 +62,7 @@ String outTopic;
 // *******************************************************
 
 // Wait this duration between each measurement (milliseconds). This is added to the time needed to read data (~2s)
-#define PERIOD_PZEM 1000  // default PZEM wait duration (a sample rate can be added, cf domoPubTimer)
+#define PERIOD_PZEM 1500  // default PZEM wait duration (a sample rate can be added, cf domoPubTimer)
 #ifdef USE_PZEM_V2
 #include "PZEM004Tv20.h"      // comment if not used
 PZEM004T pzem1(D6,D5);  // (RX,TX) connect to RX,TX of PZEM

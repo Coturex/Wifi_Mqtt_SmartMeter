@@ -1,5 +1,5 @@
 # WIFI MQTT ENERGY SMARTMETER
- * PZEM : Read Power Consumption (OR Production) - sample rate : 3s on PZEMv2, xx on PZEMv3
+ * PZEM : Read Power Consumption (OR Production) - sample rate : 2s
  * Data sent to your **Domoticz** Box, raspberry, PC... using a MQTT Broker
  
             -> data are synchronized on PZEM sample rate or DomoticzPubTimer
@@ -41,13 +41,15 @@
 
 
 ## Wiring : 
-        | Esp8266|...|PZEM004T-100A                     |    
-        |--------|---|----------------------------------|
-        | Vcc-5V |---|5V (1)  (violet)   ///      L-230V|
-        | D5(TX) |->-|RX (2)  (vert)     ///      N-230V|      
-        | D6(RX) |-<-|TX_(3)  (jaune)    ///        Coil|
-        | GND    |---|GND (4) (bleu)     ///        Coil|
-        
+
+  | Esp8266|       |PZEM004T-100A                     |    
+  |--------|-------|----------------------------------|
+  | Vcc-5V |-------|5V (1)  (violet)   ///      N-230V|--------+------- N
+  | D5(TX) |--->---|RX (2)  (vert)     ///      L-230V|--> L   |   
+  | D6(RX) |---<---|TX_(3)  (jaune)    ///        Coil|------[ | ]
+  | GND    |-------|GND (4) (bleu)     ///        Coil|------[ | ]
+                                                               |         +----                                                                  
+  
 ![photo](https://user-images.githubusercontent.com/53934994/139558602-1654c534-b2dc-4c6d-933c-fd18c7fac8af.png)
 
 # BE CARREFULL 
