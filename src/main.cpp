@@ -26,10 +26,9 @@
 #include <PubSubClient.h>       // Mqtt lib
 #include <SoftwareSerial.h>     // ESP8266/wemos requirement
 #include <WiFiManager.h>        // Manage Wifi Access Point if wifi connect failure 
-#include "Adafruit_SSD1306.h"   // OLED requirement
 
-#define USEOTA // enable On The Air firmware flash 
-#ifdef USEOTA
+
+#ifdef USE_OTA
 #include "WebOTA.h"
 #endif
 
@@ -40,8 +39,11 @@
 #define DOMO_TOPIC "domoticz/in" 
 
 // I2C OLED screen stuff
+#ifdef USE_OLED
 #define OLED_RESET 0  // GPIO0
+#include "Adafruit_SSD1306.h"   // OLED requirement
 Adafruit_SSD1306 display(OLED_RESET); // Wemos I2C : D1-SCL D2-SDA
+#endif
 
 // WiFi + MQTT stuff.
 WiFiClient espClient ;
@@ -117,6 +119,7 @@ WiFiManagerParameter custom_domoPubTimer("domoPubTimer", "Domoticz publish timer
 //      if empty -> synchronise Domoticz publication on PZEM sample rate
 //      if x sec -> Domoticz publication every x seconds (Power is then averaged). 
 
+#ifdef USE_OLED
 void oled_cls(int size) {
     // OLED : set cursor on top left corner and clear
     display.clearDisplay();
@@ -124,6 +127,7 @@ void oled_cls(int size) {
     display.setTextColor(WHITE); // seems only WHITE exist on this oled model :(
     display.setCursor(0,0);
 }
+#endif
 
 void read_Settings () { // From EEPROM
 
@@ -180,10 +184,12 @@ void saveWifiCallback() { // Save settings to EEPROM
 void wifi_connect () {
     // Wait for connection (even it's already done)
     while (WiFi.status() != WL_CONNECTED) {
+        #ifdef USE_OLED
         oled_cls(1);
         display.println("Connecting");
         display.println("wifi");
         display.display();
+        #endif
         delay(250);
         Serial.print(".");
         delay(250);
@@ -194,10 +200,12 @@ void wifi_connect () {
     Serial.println("");
     Serial.print("Connected to Network : ");
     Serial.println(WiFi.localIP());  //IP address assigned to ESP
+    #ifdef USE_OLED
     oled_cls(1);
     display.println("Wifi on");
     display.println(WiFi.localIP());
     display.display();
+    #endif
 }
 
 void setup_wifi () {
@@ -258,7 +266,6 @@ void setup_wifi () {
     }
     WiFi.printDiag(Serial);
 }
-
 bool mqtt_connect(int retry) {
     bool ret = false ;
     while (!mqtt_client.connected() && WiFi.status() == WL_CONNECTED && retry) {
@@ -266,21 +273,22 @@ bool mqtt_connect(int retry) {
         Serial.print("[mqtt_connect] (re)connecting (" + String(retry) + " left) ") ;
         retry--;
         Serial.println("[mqtt_connect]"+String(settings.mqtt_server)+":"+String(settings.mqtt_port)) ; 
+        #ifdef USE_OLED
         oled_cls(1);
         display.println("Connecting");
         display.println("mqtt - (" + String(retry)+")");  
         display.println("idx_p :" + String (settings.idx_power) );
         display.println("idx_v :" + String (settings.idx_voltage) );
         display.display();
+        #endif
         if (!mqtt_client.connect(clientId.c_str())) {
             ret = false ;
-            delay(4000);
+            delay(5000);
         } else {
             ret = true ;
             Serial.println("[mqtt_connect] Subscribing : "+ cmdTopic) ; 
             delay(2000);
             mqtt_client.subscribe(cmdTopic.c_str());
-            delay(2000);
         }
     }
     return ret ;
@@ -401,11 +409,12 @@ void setup() {
     //pzem1.resetEnergy()    ;
     #endif
 
-
+    #ifdef USE_OLED
     // OLED Shield 
     display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3C (for the 64x48)
     display.display();
     if (DEBUG) {delay(10000);} 
+    #endif
     
     //load eeprom data (sizeof(settings) bytes) from flash memory into ram
     EEPROM.begin(sizeof(settings));
@@ -424,7 +433,7 @@ void setup() {
     mqtt_client.setServer(settings.mqtt_server, port); // data will be published
     mqtt_client.setCallback(on_message); // subscribing/listening mqtt cmdTopic
     // OTA 
-    #ifdef USEOTA
+    #ifdef USE_OTA
     webota.init(8080,"/update"); // Init WebOTA server 
     #endif
 }
@@ -463,39 +472,29 @@ bool readPZEM(){
     Serial.print("1-Power Factor :") ;  
     Serial.println(pzemValues.pf); // PowerFactor
     */
-    oled_cls(1);
     if(isnan(pzemValues.voltage)) {
                 Serial.println("Error reading voltage");
-                display.println("Voltage");
-                display.println("PZEM err.");
                 pzemValues.read_error = true ;
             } else if (isnan(pzemValues.current)) {
                 Serial.println("Error reading current");
-                display.println("Current");
-                display.println("PZEM err.");
                 pzemValues.read_error = true ;
             } else if (isnan(pzemValues.power)) {  
                 Serial.println("Error reading power");
-                display.println("Power");
-                display.println("PZEM err.");
                 pzemValues.read_error = true ;
             } else if (isnan(pzemValues.energy)) { 
                 Serial.println("Error reading energy");
-                display.println("Energy");
-                display.println("PZEM err.");
                 pzemValues.read_error = true ;
             } else if (isnan(pzemValues.frequency)) {
                 Serial.println("Error reading frequency");
-                display.println("Frequency");
-                display.println("PZEM err.");
                 pzemValues.read_error = true ;
             } else if (isnan(pzemValues.pf)) {
                 Serial.println("Error reading power factor");
-                display.println("PFactor");
-                display.println("PZEM err.");
+                
                 pzemValues.read_error = true ;
             } else {  
                     pzemValues.read_error = false ;
+                    #ifdef USE_OLED
+                    oled_cls(1);
                     display.println(String(settings.name));
                     display.println("");
                     display.print(String(pzemValues.power));
@@ -505,9 +504,14 @@ bool readPZEM(){
                     display.println(" Hz");
                     display.print(String(pzemValues.voltage));
                     display.println(" V");
-                    }   
-            
+                    #endif
+                    }
+    #ifdef USE_OLED
+    oled_cls(1);
+    display.println("PZEM err.");        
     display.display();
+    #endif
+    
     return !pzemValues.read_error ;
 }
 
@@ -551,7 +555,7 @@ void loop() {
 
     statusPub();
 
-    #ifdef USEOTA
+    #ifdef USE_OTA
     webota.handle(); 
     webota.delay(PERIOD_PZEM);
     #else
