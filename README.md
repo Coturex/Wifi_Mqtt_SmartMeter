@@ -1,20 +1,19 @@
 # WIFI MQTT ENERGY SMARTMETER
- * PZEM : Read Power Consumption (OR Production) - sample rate : 2s
- * Data sent to your **Domoticz** Box, raspberry, PC... using a MQTT Broker
+ * **PZEM : Read Power** _Consumption (OR Production)_ - sample rate : 2s
+ * Data sent to your **Domoticz** Box, raspberry, PC... using a local MQTT Broker
  
-            -> data are synchronized on PZEM sample rate or DomoticzPubTimer
-            
- * Publish **all** PZEM **values** on MQTT → 'Pzem topic', 
+            -> data are synchronized on PZEM sample rate or DomoticzPubTimer (let see AP Webserver)
  
-            and **voltage/power** on → 'domoticz/in' topic (for Domoticz)
+ * Publish **power** and **voltage** on Domotics/MQTT → _'domoticz/in'_ topic
+ * Publish **all** PZEM **values** on MQTT → _'Pzem topic'_
  * Display Power/Voltage/Hz on mini screen   
- * Accuracy : ~1.5 % (compared to ENEDIS/Linky Webservice) - measure using Integral on Grafana (instead of Domoticz reports)
+ * Accuracy : ~1 % (compared to ENEDIS/Linky Webservice) - measure using Integral on Grafana (instead of Domoticz reports)
  * Wired inside Rail-DIN box
 
 ![photo](https://user-images.githubusercontent.com/53934994/136688865-a3b4bae1-0c27-487a-a898-0a9e817c8b39.png)
 ![photo](https://user-images.githubusercontent.com/53934994/137083496-70fa6ab4-3972-4f08-b075-35438a764d2d.png)
 
- * Wifi Access Point WebServer and set custom parameters
+ * Wifi Access Point **WebServer** and set **custom parameters**
  * WebOTA : On The Air firmware update
         
         URL : http://<pzem_ip>:8080/update
@@ -41,14 +40,13 @@
 
 
 ## Wiring : 
-
-  | Esp8266|       |PZEM004T-100A                     |    
-  |--------|-------|----------------------------------|
-  | Vcc-5V |-------|5V (1)  (violet)   ///      N-230V|--------+------- N
-  | D5(TX) |--->---|RX (2)  (vert)     ///      L-230V|--> L   |   
-  | D6(RX) |---<---|TX_(3)  (jaune)    ///        Coil|------[ | ]
-  | GND    |-------|GND (4) (bleu)     ///        Coil|------[ | ]
-                                                               |         +----                                                                  
+  | Esp8266|       |PZEM004T-100A   |           |    
+  |--------|-------|----------------|-----------|
+  | Vcc-5V |-------|5V  (1)         |    230v-N | 
+  | D5(TX) |--->---|RX  (2)         |    230v-L |    
+  | D6(RX) |---<---|TX  (3)         |      Coil | 
+  | GND    |-------|GND (4)         |      Coil | 
+                                                                                                                               
   
 ![photo](https://user-images.githubusercontent.com/53934994/139558602-1654c534-b2dc-4c6d-933c-fd18c7fac8af.png)
 
@@ -57,7 +55,7 @@
 
 ## Firmware
 
-→ v1.2 : https://github.com/Coturex/Wifi_Mqtt_SmartMeter/releases/download/v1.2/firmware_v1.2.bin
+→ https://github.com/Coturex/Wifi_Mqtt_SmartMeter/tree/main/Releases
 
 ## Domoticz settings
 
@@ -73,17 +71,14 @@ Here are different 'On_message' MQTT commands :
 
  Topic : 
 
-    _pzem_topic_ / _pzem_id_ / cmd
+    pzem_topic / pzem_id / cmd
 
-Commands :
-
-  '**bs**' →  will send a bootstrap message
- 
-  '**reboot**' → will reboot the device
-  
-  '**ap**' → will start AccessPoint Settings
-  
-  '**reset**'  → will reset Energy Counter _(only PZEM v3)_
+|Command | Action                                     |
+|--------|--------------------------------------------|
+| bs     | will send an Mqtt bootstrap message        |
+| reboot | will reboot the device                     |
+| ap     | will start AccessPoint Settings            |
+| reset  | will reset Energy Counter _(only PZEM v3)_ |
  
  
  
