@@ -20,13 +20,14 @@
 // D1 : I2C clock - OLED
 // D2 : I2C data  - OLED
 
+#define FW_VERSION "1.2a"
+
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include <PubSubClient.h>       // Mqtt lib
 #include <SoftwareSerial.h>     // ESP8266/wemos requirement
 #include <WiFiManager.h>        // Manage Wifi Access Point if wifi connect failure 
-
 
 #ifdef USE_OTA
 #include "WebOTA.h"
@@ -35,7 +36,6 @@
 //#include "myConfig_sample.h"  // Personnal settings - 'gited file'
 //#include "myConfig.h"           // Personnal settings - Not 'gited file'
 #include <EEPROM.h>             // EEPROM access...
-#define FW_VERSION "1.2"
 #define DOMO_TOPIC "domoticz/in" 
 
 // I2C OLED screen stuff
@@ -78,7 +78,6 @@ PZEM004Tv30 pzem1 ; // (TX,RX)connect to TX,RX of PZEM
 //  TEST & DEBUG OPTION FLAGS
 bool DEBUG = true ;
 bool TEST_CP         = false; // AP : always start the ConfigPortal, even if ap found
-int  TESP_CP_TIMEOUT = 30;    // AP : AccessPoint timeout and leave AP
 bool ALLOWONDEMAND   = true;  // AP : enable on demand - e.g Trigged on Gpio Input, On Mqtt Msg etc...
 
 #define MAX_STRING_LENGTH 35         
@@ -183,16 +182,21 @@ void saveWifiCallback() { // Save settings to EEPROM
 
 void wifi_connect () {
     // Wait for connection (even it's already done)
+    int wifi_retry = 300 ; // retries during 5 min 
+
     while (WiFi.status() != WL_CONNECTED) {
         #ifdef USE_OLED
         oled_cls(1);
         display.println("Connecting");
-        display.println("wifi");
+        display.println("wifi (" + String(wifi_retry)+")");  
         display.display();
         #endif
-        delay(250);
         Serial.print(".");
-        delay(250);
+        delay(1000); // 1s
+        wifi_retry --;
+        if (wifi_retry < 0) { // wifi timeout 
+            ESP.restart() ;
+        }
     }
 
     Serial.println("");
@@ -240,23 +244,27 @@ void setup_wifi () {
 
     //sets timeout until configuration portal gets turned off
     //useful to make it all retry or go to sleep in seconds
-    wm.setConfigPortalTimeout(120); // run AccessPoint for 120s
+    #define AP_TIMEOUT 60
+        //wm.setConnectTimeout(AP_TIMEOUT);
     WiFi.printDiag(Serial);
-    if(!wm.autoConnect("pzem_AP","admin")) {
-        Serial.println("failed to connect and hit timeout");
+    String ap_name = "pzem_AP_" + String(settings.pzem_id) ;
+    if(!wm.autoConnect(ap_name.c_str(),"admin")) {
+        Serial.println("AP : " + ap_name +"- no connection, timeout");
     } 
     else if(TEST_CP or settings.AP) {
         // start configportal always
         delay(1000);
-        wm.setConfigPortalTimeout(TESP_CP_TIMEOUT);
+        wm.setConfigPortalTimeout(AP_TIMEOUT); // run AccessPoint for .. s
         switch (settings.AP) {
             case 1: 
-                wm.startConfigPortal("request_pzem_AP");
+                ap_name = "req_pzem_AP_" +String(settings.pzem_id) ;
                 Serial.println("AP Config Portal : requested on topic/cmd");
+                wm.startConfigPortal(ap_name.c_str()) ;
                 break ;
             case 2:    
-                wm.startConfigPortal("mqtt_pzem_AP");
+                ap_name = "mqtt_pzem_AP_" +String(settings.pzem_id) ;
                 Serial.println("AP Config Portal : mqtt connection failure");
+                wm.startConfigPortal(ap_name.c_str()) ;
                 break ;
         } 
     }
@@ -276,7 +284,7 @@ bool mqtt_connect(int retry) {
         #ifdef USE_OLED
         oled_cls(1);
         display.println("Connecting");
-        display.println("mqtt - (" + String(retry)+")");  
+        display.println("mqtt (" + String(retry)+")");  
         display.println("idx_p :" + String (settings.idx_power) );
         display.println("idx_v :" + String (settings.idx_voltage) );
         display.display();
