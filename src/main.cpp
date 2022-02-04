@@ -56,13 +56,6 @@ String outTopic;
 // Wemos : it's best to avoid GPIO 0, 2 and 15 (D3, D4, D8)
 // Wemos must use softwareSerial method
 
-// *****************************************************
-// * WHICH PZEM VERSION IS USED ?
-// *******************************************************
-//#define USE_PZEM_V2 // LET COMMENT IF USE PZEM VERSION 3
-#undef USE_PZEM_V2 // LET COMMENT IF USE PZEM VERSION 2
-// *******************************************************
-
 // Wait this duration between each measurement (milliseconds). This is added to the time needed to read data (~2s)
 #define PERIOD_PZEM 1500  // default PZEM wait duration (a sample rate can be added, cf domoPubTimer)
 #ifdef USE_PZEM_V2
@@ -310,9 +303,9 @@ void bootPub() {
                 msg += "\"" + String(FW_VERSION) + "\"" ;
                 msg += ", \"pzem_version\": ";
                 #ifdef USE_PZEM_V2
-                msg += "\"v2.0\"" ;
+                msg += "\"v2\"" ;
                 #else
-                msg += "\"v3.x\"" ;
+                msg += "\"v3\"" ;
                 #endif               
                 msg += ", \"pzem_idx1\": ";
                 msg += "\"" + String(settings.idx_power) + "\"" ;
