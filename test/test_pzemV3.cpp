@@ -1,33 +1,13 @@
-/*
-Copyright (c) 2021 Jakub Mandula
-
-Example of using one PZEM module with Software Serial interface.
-================================================================
-
-If only RX and TX pins are passed to the constructor, software 
-serial interface will be used for communication with the module.
-
-*/
 #include <Arduino.h>
-#include "PZEM004Tv30.h"
 #include <SoftwareSerial.h>
+
+#include "PZEM004Tv30.h"
 
 #if defined(ESP32)
     #error "Software Serial is not supported on the ESP32"
 #endif
 
-/* Use software serial for the PZEM
- * Pin 12 Rx (Connects to the Tx pin on the PZEM)
- * Pin 13 Tx (Connects to the Rx pin on the PZEM)
-*/
-#if !defined(PZEM_RX_PIN) && !defined(PZEM_TX_PIN)
-#define PZEM_RX_PIN 12
-#define PZEM_TX_PIN 13
-#endif
-
-
-//SoftwareSerial pzemSWSerial(PZEM_RX_PIN, PZEM_TX_PIN);
-SoftwareSerial pzemSWSerial(D5,D6);
+SoftwareSerial pzemSWSerial(D5,D6); // pzemSWSerial(PZEM_RX_PIN, PZEM_TX_PIN);
 
 PZEM004Tv30 pzem(pzemSWSerial);
 

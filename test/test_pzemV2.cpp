@@ -1,11 +1,11 @@
-#include <SoftwareSerial.h> // Arduino IDE <1.6.6
 #include <Arduino.h>
-
+#include <SoftwareSerial.h> // Arduino IDE <1.6.6
 
 #include "PZEM004Tv20.h"
 // pzemRX bleu  D5 gpio14
 // pzemTX blanc D6 gpio12
-PZEM004T pzem(12,14);  // (RX,TX) connect to RX,TX of PZEM
+
+PZEM004T pzem(D5,D6);  // (RX,TX) connect to RX,TX of PZEM
 IPAddress ip(192,168,1,1);
 
 void setup() {
