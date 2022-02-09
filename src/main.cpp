@@ -20,7 +20,7 @@
 // D1 : I2C clock - OLED
 // D2 : I2C data  - OLED
 
-#define FW_VERSION "1.2a"
+#define FW_VERSION "1.2b"
 
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
@@ -122,7 +122,6 @@ void oled_cls(int size) {
 #endif
 
 void read_Settings () { // From EEPROM
-
     unsigned int addr=0 ;  
     //Serial.println("[READ EEPROM] read_Settings");  
     EEPROM.get(addr, settings); //read data from array in ram and cast it to settings
@@ -180,7 +179,6 @@ void saveWifiCallback() { // Save settings to EEPROM
 void wifi_connect () {
     // Wait for connection (even it's already done)
     int wifi_retry = 300 ; // retries during 5 min 
-
     while (WiFi.status() != WL_CONNECTED) {
         #ifdef USE_OLED
         oled_cls(1);
@@ -244,14 +242,15 @@ void setup_wifi () {
     int AP_TIMEOUT = 60 ;
         //wm.setConnectTimeout(AP_TIMEOUT);
     WiFi.printDiag(Serial);
-    String apName = "pzem_AP_" + String(settings.pzem_id) ;
+    Serial.println("chip id :" + String(ESP.getChipId()));
+    String apName = "pzem_AP_" + String(ESP.getChipId()) ;
+    wm.setConfigPortalTimeout(AP_TIMEOUT); // run AccessPoint for .. s  
     if(!wm.autoConnect(apName.c_str(),"admin")) {
         Serial.println("AP : " + apName +"- no connection, timeout");
     } 
     else if(TEST_CP or settings.AP) {
         // start configportal always
         delay(1000);
-        wm.setConfigPortalTimeout(AP_TIMEOUT); // run AccessPoint for .. s
         switch (settings.AP) {
             case 1: 
                 apName = "req_pzem_AP_" +String(settings.pzem_id) ;
@@ -313,6 +312,8 @@ void bootPub() {
                 msg += "\"" + String(settings.pzem_id) + "\"" ;
                 msg += ", \"fw_version\": ";
                 msg += "\"" + String(FW_VERSION) + "\"" ;
+                msg += ", \"chip_id\": ";
+                msg += "\"" + String(ESP.getChipId()) + "\"" ;
                 msg += ", \"pzem_version\": ";
                 #ifdef USE_PZEM_V2
                 msg += "\"v2\"" ;
@@ -432,7 +433,7 @@ void setup() {
     Serial.println("EEPROM size: " + String(sizeof(settings)) + " bytes");
     read_Settings(); // read EEPROM
     // PERIOD_PZEM += settings.domoPubTimer ;
-
+    
     setup_wifi() ;
     delay(5000) ;
     uint16_t port ;

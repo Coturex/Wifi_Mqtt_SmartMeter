@@ -3,3 +3,4 @@
 include/myConfig.h
 test/main
 Releases/make_fw.sh
+Releases/*rc*
