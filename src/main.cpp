@@ -20,7 +20,7 @@
 // D1 : I2C clock - OLED
 // D2 : I2C data  - OLED
 
-#define FW_VERSION "1.2b"
+#define FW_VERSION "1.2c"
 
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
