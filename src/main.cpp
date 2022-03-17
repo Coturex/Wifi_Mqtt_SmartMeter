@@ -15,12 +15,12 @@
  */
 
 // Wemos pin use : it's best to avoid GPIO 0, 2 and 15 (D3, D4, D8)
-// D5 : RX pzem
-// D6 : TX pzem
+// D5-TX : RX pzem
+// D6-RX : TX pzem
 // D1 : I2C clock - OLED
 // D2 : I2C data  - OLED
 
-#define FW_VERSION "1.2c"
+#define FW_VERSION "1.2d"
 
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
@@ -60,12 +60,12 @@ String outTopic;
 #define PERIOD_PZEM 1500  // default PZEM wait duration (a sample rate can be added, cf domoPubTimer)
 #ifdef USE_PZEM_V2
 #include "PZEM004Tv20.h"      // comment if not used
-PZEM004T pzem1(D6,D5);  // (RX,TX) connect to RX,TX of PZEM
+PZEM004T pzem1(D6,D5);  // (RX,TX) connect to TX,RX of PZEM
 IPAddress pzem_ip(192,99,1,1);
 #else
 #include "PZEM004Tv30.h"        // comment if not used
-SoftwareSerial pzemSWSerial1(D5, D6);
-PZEM004Tv30 pzem1 ; // (TX,RX)connect to TX,RX of PZEM
+SoftwareSerial pzemSWSerial1(D6, D5);
+PZEM004Tv30 pzem1 ; // pzemSWSerial1(RX,TX) connect to TX,RX of PZEM
 #endif
 
 //  TEST & DEBUG OPTION FLAGS
@@ -244,17 +244,14 @@ void setup_wifi () {
     wm.setTimeout(AP_TIMEOUT) ;
         //wm.setConnectTimeout(AP_TIMEOUT);
     WiFi.printDiag(Serial);
-    if (String(settings.name).isEmpty()){
-        apName = "pzem_AP_" + String(ESP.getChipId()) ;
-    } else {
-        apName = "pzem_AP_" + String(settings.name) ;
-    }
+    apName = "pzem_AP_" + String(ESP.getChipId()) ; 
     if(!wm.autoConnect(apName.c_str(),"admin")) {
         Serial.println("AP : " + apName +"- no connection, timeout");
     } 
     else if(TEST_CP or settings.AP) {
         // start configportal always
         delay(1000);
+        apName = "pzem_AP_" + String(settings.name) ;
         wm.setConfigPortalTimeout(AP_TIMEOUT); // run AccessPoint for .. s
         switch (settings.AP) {
             case 1: 
@@ -283,6 +280,7 @@ void setup_wifi () {
     }
     WiFi.printDiag(Serial);
 }
+
 bool mqtt_connect(int retry) {
     bool ret = false ;
     while (!mqtt_client.connected() && WiFi.status() == WL_CONNECTED && retry) {
