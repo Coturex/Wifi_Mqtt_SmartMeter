@@ -20,7 +20,7 @@
 // D1 : I2C clock - OLED
 // D2 : I2C data  - OLED
 
-#define FW_VERSION "1.2d"
+#define FW_VERSION "1.3"
 
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
@@ -50,7 +50,7 @@ WiFiClient espClient ;
 PubSubClient mqtt_client(espClient);  
 String cmdTopic;
 String outTopic;
-#define MQTT_RETRY 5     // How many retries before starting AccessPoint
+#define MQTT_RETRY 10     // How many retries before starting AccessPoint
 
 // Setup our pzem module with these pins : pins must be chosen carefully so that the ESP can/cannot boot.
 // Wemos : it's best to avoid GPIO 0, 2 and 15 (D3, D4, D8)
@@ -95,6 +95,7 @@ struct {
     float pf= 0;
     float powerAvg = 0 ;
     bool  read_error = false ;
+    int   err_count = 0 ;
 } pzemValues ;
 
 WiFiManager wm;
@@ -310,25 +311,25 @@ bool mqtt_connect(int retry) {
 }
 
 void bootPub() {
-        String  msg = "{\"type\": \"pzem\"";	
+        String  msg = "{\"type\": pzem";	
                 msg += ", \"id\": ";
-                msg += "\"" + String(settings.pzem_id) + "\"" ;
+                msg += String(settings.pzem_id) + "\"" ;
                 msg += ", \"fw_version\": ";
-                msg += "\"" + String(FW_VERSION) + "\"" ;
+                msg += String(FW_VERSION) ;
                 msg += ", \"chip_id\": ";
-                msg += "\"" + String(ESP.getChipId()) + "\"" ;
+                msg += String(ESP.getChipId()) ;
                 msg += ", \"pzem_version\": ";
                 #ifdef USE_PZEM_V2
-                msg += "\"v2\"" ;
+                msg += "v2" ;
                 #else
-                msg += "\"v3\"" ;
+                msg += "v3" ;
                 #endif               
                 msg += ", \"pzem_idx1\": ";
-                msg += "\"" + String(settings.idx_power) + "\"" ;
+                msg += String(settings.idx_power) ;
                 msg += ", \"pzem_idx2\": ";
-                msg += "\"" + String(settings.idx_voltage) + "\"" ;
+                msg += String(settings.idx_voltage) ;
                 msg += ", \"DomoPubTimer\": ";
-                msg += "\"" + String(settings.domoPubTimer/1000) + "\"" ;
+                msg += String(settings.domoPubTimer/1000) ;
                 msg += ", \"ip\": ";  
                 msg += WiFi.localIP().toString().c_str() ;
                 msg += "}" ;
@@ -371,6 +372,8 @@ void statusPub() {
         msg += String(pzemValues.frequency);
         msg += ", \"powerfactor\": ";
         msg += String(pzemValues.pf);
+        msg += ", \"err\": ";  
+        msg += String(pzemValues.err_count) ;
         msg += "}";
     }
     String topic = String(settings.pzem_topic)+"/"+String(settings.pzem_id) ;
@@ -454,6 +457,7 @@ void setup() {
 }
 
 bool readPZEM(){
+    pzemValues.read_error = false ;
     #ifdef USE_PZEM_V2
         pzemValues.voltage = pzem1.voltage(pzem_ip);
         pzemValues.current = pzem1.current(pzem_ip);
@@ -462,7 +466,7 @@ bool readPZEM(){
         pzemValues.frequency = 0 ;
         pzemValues.pf = 0 ;
     #else // USE PZEM V3
-        Serial.print("PZEM-1 Custom Address:");
+        Serial.print("[readPZEM] PZEM-1 Custom Address:");
         Serial.println(pzem1.readAddress(), HEX);
         pzemValues.power = pzem1.power();
         pzemValues.voltage = pzem1.voltage();
@@ -472,9 +476,9 @@ bool readPZEM(){
         pzemValues.pf = pzem1.pf(); 
     #endif
     if (DEBUG) {
-    Serial.print("1-Puissance : ") ;
+    Serial.print("[readPZEM] 1-Puissance : ") ;
     Serial.println(pzemValues.power);
-    Serial.print("1-Volt : ") ;
+    Serial.print("[readPZEM] 1-Volt : ") ;
     Serial.println(pzemValues.voltage);
     }
 /*    
@@ -490,6 +494,7 @@ bool readPZEM(){
     if(isnan(pzemValues.voltage)) {
                 Serial.println("Error reading voltage");
                 pzemValues.read_error = true ;
+                
             } else if (isnan(pzemValues.current)) {
                 Serial.println("Error reading current");
                 pzemValues.read_error = true ;
@@ -504,29 +509,32 @@ bool readPZEM(){
                 pzemValues.read_error = true ;
             } else if (isnan(pzemValues.pf)) {
                 Serial.println("Error reading power factor");
-                
                 pzemValues.read_error = true ;
-            } else {  
-                    pzemValues.read_error = false ;
-                    #ifdef USE_OLED
-                    oled_cls(1);
-                    display.println(String(settings.name));
-                    display.println("");
-                    display.print(String(pzemValues.power));
-                    display.println(" W");
-                    display.println("");
-                    display.print(String(pzemValues.frequency));
-                    display.println(" Hz");
-                    display.print(String(pzemValues.voltage));
-                    display.println(" V");
-                    #endif
-                    }
+            }
+        
     #ifdef USE_OLED
-    oled_cls(1);
-    display.println("PZEM err.");        
-    display.display();
+    if (pzemValues.read_error) {
+        oled_cls(1);
+        display.println("PZEM err.");        
+        display.display();
+        pzemValues.err_count += 1 ;
+    } else {
+        oled_cls(1);
+        display.println(String(settings.name));
+        display.print(String(pzemValues.power));
+        display.println(" W");
+        display.println("");
+        display.print(String(pzemValues.frequency));
+        display.println(" Hz");
+        display.print(String(pzemValues.voltage));
+        display.println(" V");
+        display.print("En ") ;
+        display.print(String(pzemValues.energy));
+        display.println(" kW");
+        display.display();
+    }
     #endif
-    
+
     return !pzemValues.read_error ;
 }
 
