@@ -20,7 +20,8 @@
 // D1 : I2C clock - OLED
 // D2 : I2C data  - OLED
 
-#define FW_VERSION "1.3"
+#define FW_VERSION "1.3a"
+bool DEBUG = false ;
 
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
@@ -51,13 +52,14 @@ PubSubClient mqtt_client(espClient);
 String cmdTopic;
 String outTopic;
 #define MQTT_RETRY 10     // How many retries before starting AccessPoint
+#define WIFI_RETRY 300    // How many retries before starting AccessPoint
 
 // Setup our pzem module with these pins : pins must be chosen carefully so that the ESP can/cannot boot.
 // Wemos : it's best to avoid GPIO 0, 2 and 15 (D3, D4, D8)
 // Wemos must use softwareSerial method
 
 // Wait this duration between each measurement (milliseconds). This is added to the time needed to read data (~2s)
-#define PERIOD_PZEM 1500  // default PZEM wait duration (a sample rate can be added, cf domoPubTimer)
+int PZEM_PERIOD = 1700 ; // default PZEM wait duration (a sample rate can be added, cf domoPubTimer)
 #ifdef USE_PZEM_V2
 #include "PZEM004Tv20.h"      // comment if not used
 PZEM004T pzem1(D6,D5);  // (RX,TX) connect to TX,RX of PZEM
@@ -68,8 +70,7 @@ SoftwareSerial pzemSWSerial1(D6, D5);
 PZEM004Tv30 pzem1 ; // pzemSWSerial1(RX,TX) connect to TX,RX of PZEM
 #endif
 
-//  TEST & DEBUG OPTION FLAGS
-bool DEBUG = true ;
+//  ACCESS POINT
 bool TEST_CP         = false; // AP : always start the ConfigPortal, even if ap found
 bool ALLOWONDEMAND   = true;  // AP : enable on demand - e.g Trigged on Gpio Input, On Mqtt Msg etc...
 
@@ -80,6 +81,7 @@ struct {
     char mqtt_port[MAX_STRING_LENGTH] = "";
     char pzem_topic[MAX_STRING_LENGTH] = "";
     char pzem_id[MAX_STRING_LENGTH] = "";
+    char pzem_srate[MAX_STRING_LENGTH] = "";    
     char idx_power[MAX_STRING_LENGTH] = "";
     char idx_voltage[MAX_STRING_LENGTH] = "";
     int  domoPubTimer = 0;
@@ -96,6 +98,8 @@ struct {
     float powerAvg = 0 ;
     bool  read_error = false ;
     int   err_count = 0 ;
+    int   read_count = 0 ;
+    float ppm_err = 0 ;
 } pzemValues ;
 
 WiFiManager wm;
@@ -104,6 +108,7 @@ WiFiManagerParameter custom_mqtt_server("mqtt_server", "mqtt IP server", "", 15)
 WiFiManagerParameter custom_mqtt_port("mqtt_port", "mqtt Port", "", 4);
 WiFiManagerParameter custom_pzem_topic("pzem_topic", "Pzem Topic", "", 35);
 WiFiManagerParameter custom_pzem_id("pzem_id", "Pzem ID", "", 15);
+WiFiManagerParameter custom_pzem_srate("pzem_srate", "Pzem srate (s >1500)", "", 5);
 WiFiManagerParameter custom_idx_power("idx_power", "Domoticz idx power", "", 4); 
 WiFiManagerParameter custom_idx_voltage("idx_volt", "Domoticz idx voltage", "", 4);
 WiFiManagerParameter custom_domoPubTimer("domoPubTimer", "Domoticz publish timer (s)", "", 4);
@@ -131,6 +136,7 @@ void read_Settings () { // From EEPROM
     Serial.println("[READ EEPROM] mqtt_port : " + String(settings.mqtt_port) ) ;
     Serial.println("[READ EEPROM] pzem_topic : " + String(settings.pzem_topic) ) ;
     Serial.println("[READ EEPROM] pzem_id : " + String(settings.pzem_id) ) ;
+    Serial.println("[READ EEPROM] pzem_srate : " + String(settings.pzem_srate) ) ;
     Serial.println("[READ EEPROM] idx_power : " + String(settings.idx_power) ) ;
     Serial.println("[READ EEPROM] idx_voltage : " + String(settings.idx_voltage) ) ;
     Serial.println("[READ EEPROM] domoPubTimer   : " + String(settings.domoPubTimer) ) ;
@@ -150,7 +156,7 @@ void saveWifiCallback() { // Save settings to EEPROM
     if (custom_name.getValue()[0] != '.') { 
         strncpy(settings.name, custom_name.getValue(), MAX_STRING_LENGTH);  
     }
-    if (custom_name.getValue()[0] != '.') { 
+    if (custom_mqtt_server.getValue()[0] != '.') { 
     strncpy(settings.mqtt_server, custom_mqtt_server.getValue(), MAX_STRING_LENGTH);  
     }
     if (custom_mqtt_port.getValue()[0] != '.') { 
@@ -161,6 +167,9 @@ void saveWifiCallback() { // Save settings to EEPROM
     }
     if (custom_pzem_id.getValue()[0] != '.') { 
         strncpy(settings.pzem_id, custom_pzem_id.getValue(), MAX_STRING_LENGTH);  
+    }
+    if (custom_pzem_srate.getValue()[0] != '.') { 
+        strncpy(settings.pzem_srate, custom_pzem_srate.getValue(), MAX_STRING_LENGTH);  
     }
     if (custom_idx_power.getValue()[0] != '.') { 
         strncpy(settings.idx_power, custom_idx_power.getValue(), MAX_STRING_LENGTH);  
@@ -177,20 +186,19 @@ void saveWifiCallback() { // Save settings to EEPROM
     write_Settings() ;    
 }
 
-void wifi_connect () {
+void wifi_connect (int retry) {
     // Wait for connection (even it's already done)
-    int wifi_retry = 300 ; // retries during 5 min 
     while (WiFi.status() != WL_CONNECTED) {
         #ifdef USE_OLED
         oled_cls(1);
         display.println("Connecting");
-        display.println("wifi (" + String(wifi_retry)+")");  
+        display.println("wifi (" + String(retry)+")");  
         display.display();
         #endif
         Serial.print(".");
         delay(1000); // 1s
-        wifi_retry --;
-        if (wifi_retry < 0) { // wifi timeout 
+        retry --;
+        if (retry < 0) { // wifi timeout 
             ESP.restart() ;
         }
     }
@@ -212,12 +220,11 @@ void setup_wifi () {
     delay(10);
     WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP   
     // WiFi.setSleepMode(WIFI_NONE_SLEEP); // disable sleep, can improve ap stability
-
     // wm.debugPlatformInfo();
     //reset settings - for testing
     // wm.resetSettings();
     // wm.erase();  
-
+    WiFi.softAPdisconnect(true) ;
     // setup some parameters
     WiFiManagerParameter custom_html("<p>EEPROM Custom Parameters</p>"); // only custom html
     wm.addParameter(&custom_html);
@@ -226,6 +233,7 @@ void setup_wifi () {
     wm.addParameter(&custom_mqtt_port);
     wm.addParameter(&custom_pzem_topic);
     wm.addParameter(&custom_pzem_id);
+    wm.addParameter(&custom_pzem_srate);
     wm.addParameter(&custom_idx_power);
     wm.addParameter(&custom_idx_voltage);
     wm.addParameter(&custom_domoPubTimer);
@@ -245,7 +253,7 @@ void setup_wifi () {
     wm.setTimeout(AP_TIMEOUT) ;
         //wm.setConnectTimeout(AP_TIMEOUT);
     WiFi.printDiag(Serial);
-    apName = "pzem_AP_" + String(ESP.getChipId()) ; 
+    apName = "pzem_AP_" + String(settings.name) + "_" + String(ESP.getChipId()) ; 
     if(!wm.autoConnect(apName.c_str(),"admin")) {
         Serial.println("AP : " + apName +"- no connection, timeout");
     } 
@@ -311,9 +319,9 @@ bool mqtt_connect(int retry) {
 }
 
 void bootPub() {
-        String  msg = "{\"type\": pzem";	
+        String  msg = "{ \"type\": pzem";	
                 msg += ", \"id\": ";
-                msg += String(settings.pzem_id) + "\"" ;
+                msg += String(settings.pzem_id) ;
                 msg += ", \"fw_version\": ";
                 msg += String(FW_VERSION) ;
                 msg += ", \"chip_id\": ";
@@ -323,7 +331,9 @@ void bootPub() {
                 msg += "v2" ;
                 #else
                 msg += "v3" ;
-                #endif               
+                #endif         
+                msg += ", \"srate\": ";
+                msg += String(PZEM_PERIOD) ;      
                 msg += ", \"pzem_idx1\": ";
                 msg += String(settings.idx_power) ;
                 msg += ", \"pzem_idx2\": ";
@@ -333,13 +343,14 @@ void bootPub() {
                 msg += ", \"ip\": ";  
                 msg += WiFi.localIP().toString().c_str() ;
                 msg += "}" ;
-        if (DEBUG) { Serial.println("Sending Bootstrap on topic : " + String(settings.pzem_topic));}
-        mqtt_client.publish(String(settings.pzem_topic).c_str(), msg.c_str()); 
+        String bootSuffix = "" ;
+        if (DEBUG) { Serial.println("Sending Bootstrap on topic : " + String(settings.pzem_topic)+ bootSuffix);}
+        mqtt_client.publish((String(settings.pzem_topic)+ bootSuffix).c_str(), msg.c_str()); 
 }
 
 void domoPub(String idx, float value) {
     if (idx.toInt()> 0) {
-      String msg = "{\"idx\": ";	 // {"idx": 209, "nvalue": 0, "svalue": "2052"}
+      String msg = "{ \"idx\": ";	 // {"idx": 209, "nvalue": 0, "svalue": "2052"}
       msg += idx;
       msg += ", \"nvalue\": 0, \"svalue\": \"";
       msg += value ;
@@ -357,9 +368,15 @@ void domoPub(String idx, float value) {
 void statusPub() {
     String msg ;
     if (pzemValues.read_error) {
-        msg = "{ \"PZEM_READ_ERROR\" } ";
+        msg = "{ \"PZEM_READ_ERROR\": ";
+        msg += String(pzemValues.err_count);
+        msg += ", \"pzem_read \": ";  
+        msg += String(pzemValues.read_count) ;    
+        msg += ", \"ppm_err\": ";  
+        msg += String(pzemValues.ppm_err) ;    
+        msg += "}";
     } else {
-        msg = "{";
+        msg = "{ ";
         msg += "\"voltage\": ";
         msg += String( (pzemValues.voltage < 0) ? 0 : pzemValues.voltage ) ;
         msg += ", \"current\": ";
@@ -372,8 +389,13 @@ void statusPub() {
         msg += String(pzemValues.frequency);
         msg += ", \"powerfactor\": ";
         msg += String(pzemValues.pf);
-        msg += ", \"err\": ";  
-        msg += String(pzemValues.err_count) ;
+        /*msg += "{ \"PZEM_READ_ERROR\": ";
+        msg += String(pzemValues.err_count);
+        msg += ", \"pzem_read \": ";  
+        msg += String(pzemValues.read_count) ;   
+        */ 
+        msg += ", \"ppm_err\": ";  
+        msg += String(pzemValues.ppm_err) ;    
         msg += "}";
     }
     String topic = String(settings.pzem_topic)+"/"+String(settings.pzem_id) ;
@@ -430,16 +452,18 @@ void setup() {
     #ifdef USE_OLED
     // OLED Shield 
     display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3C (for the 64x48)
-    display.display();
-    if (DEBUG) {delay(10000);} 
+    display.display(); 
     #endif
     
     //load eeprom data (sizeof(settings) bytes) from flash memory into ram
     EEPROM.begin(sizeof(settings));
-    Serial.println("EEPROM size: " + String(sizeof(settings)) + " bytes");
+    Serial.println("[setup] EEPROM size: " + String(sizeof(settings)) + " bytes");
     read_Settings(); // read EEPROM
-    // PERIOD_PZEM += settings.domoPubTimer ;
-    
+    PZEM_PERIOD = String(settings.pzem_srate).toInt() ;
+    if (PZEM_PERIOD < 1000) {
+        PZEM_PERIOD = 1000 ;
+    } 
+    Serial.println("[setup] PZEM_PERIOD : "+ String(PZEM_PERIOD));
     setup_wifi() ;
     delay(5000) ;
     uint16_t port ;
@@ -458,6 +482,7 @@ void setup() {
 
 bool readPZEM(){
     pzemValues.read_error = false ;
+    pzemValues.read_count += 1 ;
     #ifdef USE_PZEM_V2
         pzemValues.voltage = pzem1.voltage(pzem_ip);
         pzemValues.current = pzem1.current(pzem_ip);
@@ -466,8 +491,10 @@ bool readPZEM(){
         pzemValues.frequency = 0 ;
         pzemValues.pf = 0 ;
     #else // USE PZEM V3
+    if (DEBUG) {
         Serial.print("[readPZEM] PZEM-1 Custom Address:");
         Serial.println(pzem1.readAddress(), HEX);
+    }
         pzemValues.power = pzem1.power();
         pzemValues.voltage = pzem1.voltage();
         pzemValues.current = pzem1.current();
@@ -494,14 +521,13 @@ bool readPZEM(){
     if(isnan(pzemValues.voltage)) {
                 Serial.println("Error reading voltage");
                 pzemValues.read_error = true ;
-                
             } else if (isnan(pzemValues.current)) {
                 Serial.println("Error reading current");
                 pzemValues.read_error = true ;
-            } else if (isnan(pzemValues.power)) {  
+             } else if (isnan(pzemValues.power)) {  
                 Serial.println("Error reading power");
                 pzemValues.read_error = true ;
-            } else if (isnan(pzemValues.energy)) { 
+             } else if (isnan(pzemValues.energy)) { 
                 Serial.println("Error reading energy");
                 pzemValues.read_error = true ;
             } else if (isnan(pzemValues.frequency)) {
@@ -511,13 +537,15 @@ bool readPZEM(){
                 Serial.println("Error reading power factor");
                 pzemValues.read_error = true ;
             }
-        
+    
+    if (pzemValues.read_error) {
+        pzemValues.err_count += 1 ; 
+    }
     #ifdef USE_OLED
     if (pzemValues.read_error) {
         oled_cls(1);
         display.println("PZEM err.");        
         display.display();
-        pzemValues.err_count += 1 ;
     } else {
         oled_cls(1);
         display.println(String(settings.name));
@@ -528,13 +556,24 @@ bool readPZEM(){
         display.println(" Hz");
         display.print(String(pzemValues.voltage));
         display.println(" V");
-        display.print("En ") ;
         display.print(String(pzemValues.energy));
         display.println(" kW");
         display.display();
     }
     #endif
+    float percent = 0 ;
+    if (DEBUG) { Serial.println("[readPZEM] read_count : " + String(pzemValues.read_count));}
+    if (DEBUG) { Serial.println("[readPZEM] err_count : " + String(pzemValues.err_count));}
 
+    if (pzemValues.read_count >= 100) {
+        percent = pzemValues.err_count / 1;
+        if (DEBUG) { Serial.println("[readPZEM] percent_error : " + String(percent));}
+        //if (percent > pzemValues.ppm_err) {}
+
+        pzemValues.ppm_err = percent ;
+        pzemValues.read_count = 0 ;
+        pzemValues.err_count = 0 ;
+    }
     return !pzemValues.read_error ;
 }
 
@@ -546,20 +585,22 @@ void loop() {
     unsigned long loopTime = millis() ;
     if (DEBUG) {Serial.println("--") ;} ;
     if (WiFi.status() != WL_CONNECTED) {
-        wifi_connect();
+        wifi_connect(WIFI_RETRY);
     }
     if (!mqtt_client.connected() && WiFi.status() == WL_CONNECTED ) {
        if (mqtt_connect(MQTT_RETRY)) { 
            bootPub();
         } else {
-            rebootOnAP(2);
+            if (WiFi.status() == WL_CONNECTED) {
+                rebootOnAP(2);
+            }
         }
     }
     mqtt_client.loop(); // seems it blocks for 100ms
     
     if (readPZEM()) {
         countLoopDomoPubTimer++ ;
-        if (settings.domoPubTimer > PERIOD_PZEM) { // domoPubTimer settings is not Empty,  PowerAvg is used
+        if (settings.domoPubTimer > PZEM_PERIOD) { // domoPubTimer settings is not Empty,  PowerAvg is used
             pzemValues.powerAvg += pzemValues.power ;
             spendTimeDomoPubTimer = millis() - startLoopDomoPubTimer ;
             if (DEBUG) { Serial.println("spendTimeDomoPubTimer : " + String(spendTimeDomoPubTimer)) ;} ; 
@@ -580,9 +621,9 @@ void loop() {
 
     #ifdef USE_OTA
     webota.handle(); 
-    webota.delay(PERIOD_PZEM);
+    webota.delay(PZEM_PERIOD);
     #else
-    delay(PERIOD_PZEM) ;
+    delay(PZEM_PERIOD) ;
     #endif
 
     if (DEBUG) {
