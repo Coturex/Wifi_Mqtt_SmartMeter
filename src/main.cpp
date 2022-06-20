@@ -592,7 +592,8 @@ void loop() {
            bootPub();
         } else {
             if (WiFi.status() == WL_CONNECTED) {
-                rebootOnAP(2);
+	      if (DEBUG) {Serial.println("-- mqtt retry reached, rebooting...") ;} ;
+	      rebootOnAP(2);
             }
         }
     }
